@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Noto_Sans_JP } from 'next/font/google'
 import './globals.css'
 import Nav from '@/components/Nav'
+import Footer from '@/components/Footer'
 
 const notoSansJP = Noto_Sans_JP({
   subsets: ['latin'],
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={notoSansJP.className}>
         <Nav />
         <main style={{ paddingTop: 64 }}>{children}</main>
+        <Footer />
       </body>
     </html>
   )
