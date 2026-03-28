@@ -8,7 +8,10 @@ const GRADES: Record<string, string[]> = {
   'Model Y': ['RWD', 'Long Range'],
   'Model 3': ['RWD', 'Long Range', 'Performance'],
 }
-const COLORS = ['パールホワイト', 'ミッドナイトシルバー', 'ディープブルー', 'ソリッドブラック', 'ウルトラレッド', 'スターホワイト', 'スチールグレー']
+const COLORS: Record<string, string[]> = {
+  'Model Y': ['ステルスグレー', 'ダイヤモンドブラック', 'グレイシャーブルー', 'パールホワイト', 'クイックシルバー', 'ウルトラレッド'],
+  'Model 3': ['ステルスグレー', 'ダイヤモンドブラック', 'マリンブルー', 'パールホワイト', 'クイックシルバー', 'ウルトラレッド'],
+}
 const PREFECTURES = ['北海道','青森','岩手','宮城','秋田','山形','福島','茨城','栃木','群馬','埼玉','千葉','東京','神奈川','新潟','富山','石川','福井','山梨','長野','岐阜','静岡','愛知','三重','滋賀','京都','大阪','兵庫','奈良','和歌山','鳥取','島根','岡山','広島','山口','徳島','香川','愛媛','高知','福岡','佐賀','長崎','熊本','大分','宮崎','鹿児島','沖縄']
 
 const STAGES = [
@@ -119,7 +122,7 @@ export default function NewDelivery() {
             <label style={lbl}>外装色</label>
             <select value={color} onChange={e => setColor(e.target.value)} style={{ ...inp, background: '#1A1A1A' }}>
               <option value="">選択</option>
-              {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+              {(COLORS[model] || []).map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </div>
