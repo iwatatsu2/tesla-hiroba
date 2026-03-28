@@ -3,7 +3,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-weight: 300;
+  font-family: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+  font-weight: 400;
   color: #111111;
   background: #ffffff;
   line-height: 1.85;
@@ -13,6 +14,7 @@ body {
 }
 
 a, button, input, textarea, select {
+  font-family: inherit;
   word-break: keep-all;
   overflow-wrap: break-word;
 }

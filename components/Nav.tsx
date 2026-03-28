@@ -15,6 +15,14 @@ export default function Nav() {
   }
 
   const isMap = pathname.startsWith('/map') || pathname.startsWith('/spots')
+  const isNews = pathname.startsWith('/news')
+
+  const tabStyle = (active: boolean) => ({
+    padding: '5px 11px', borderRadius: 4, fontSize: 12, textDecoration: 'none' as const,
+    color: active ? '#111' : '#888',
+    background: active ? '#f0f0f0' : 'transparent',
+    whiteSpace: 'nowrap' as const,
+  })
 
   return (
     <nav style={{
@@ -23,40 +31,29 @@ export default function Nav() {
       backdropFilter: 'blur(12px)',
       borderBottom: '1px solid #f0f0f0',
       display: 'flex', alignItems: 'center',
-      padding: '0 20px', gap: 20,
+      padding: '0 16px', gap: 12,
     }}>
       <Link href="/" style={{
-        fontWeight: 500, fontSize: 14, letterSpacing: '0.18em',
+        fontWeight: 700, fontSize: 14, letterSpacing: '0.18em',
         color: '#111', textDecoration: 'none', whiteSpace: 'nowrap',
       }}>
         TSLA PARK
       </Link>
 
-      <div style={{ display: 'flex', gap: 4 }}>
-        <Link href="/" style={{
-          padding: '5px 12px', borderRadius: 4, fontSize: 12, textDecoration: 'none',
-          color: !isMap ? '#111' : '#888',
-          background: !isMap ? '#f0f0f0' : 'transparent',
-        }}>
-          掲示板
-        </Link>
-        <Link href="/map" style={{
-          padding: '5px 12px', borderRadius: 4, fontSize: 12, textDecoration: 'none',
-          color: isMap ? '#111' : '#888',
-          background: isMap ? '#f0f0f0' : 'transparent',
-        }}>
-          充電マップ
-        </Link>
+      <div style={{ display: 'flex', gap: 2 }}>
+        <Link href="/" style={tabStyle(!isMap && !isNews)}>掲示板</Link>
+        <Link href="/news" style={tabStyle(isNews)}>ニュース</Link>
+        <Link href="/map" style={tabStyle(isMap)}>充電マップ</Link>
       </div>
 
-      {!isMap && (
-        <form onSubmit={handleSearch} style={{ flex: 1, maxWidth: 360 }}>
+      {!isMap && !isNews && (
+        <form onSubmit={handleSearch} style={{ flex: 1, maxWidth: 320 }}>
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="キーワードで検索..."
+            placeholder="キーワード検索..."
             style={{
-              width: '100%', padding: '8px 14px',
+              width: '100%', padding: '7px 12px',
               border: '1px solid #e8e8e8', borderRadius: 4,
               fontSize: 13, outline: 'none', fontFamily: 'inherit',
             }}
@@ -66,9 +63,9 @@ export default function Nav() {
 
       <div style={{ marginLeft: 'auto' }}>
         <Link href="/new" style={{
-          padding: '8px 16px', background: '#111', color: '#fff',
+          padding: '7px 14px', background: '#111', color: '#fff',
           borderRadius: 4, fontSize: 12, fontWeight: 500,
-          letterSpacing: '0.08em', textDecoration: 'none',
+          letterSpacing: '0.06em', textDecoration: 'none',
         }}>
           投稿する
         </Link>
