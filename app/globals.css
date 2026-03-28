@@ -3,12 +3,18 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Helvetica Neue', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
   font-weight: 300;
   color: #111111;
   background: #ffffff;
   line-height: 1.85;
   -webkit-font-smoothing: antialiased;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+a, button, input, textarea, select {
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 @keyframes fadeInUp {
