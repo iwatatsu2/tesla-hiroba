@@ -5,11 +5,14 @@ import NewsSection from '@/components/NewsSection'
 export default function Home() {
   return (
     <div>
-      <Suspense>
-        <PostsSection />
-      </Suspense>
+      {/* ニュース（一番上） */}
+      <NewsSection />
+
+      {/* コミュニティ投稿 */}
       <div style={{ borderTop: '1px solid #f0f0f0' }}>
-        <NewsSection />
+        <Suspense>
+          <PostsSection />
+        </Suspense>
       </div>
     </div>
   )
