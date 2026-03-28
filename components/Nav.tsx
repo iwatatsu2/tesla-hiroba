@@ -3,69 +3,72 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 
+const MENU = [
+  { href: '/', label: '掲示板', match: (p: string) => p === '/' || p.startsWith('/posts') || p.startsWith('/new') },
+  { href: '/delivery', label: '納車トラッカー', match: (p: string) => p.startsWith('/delivery') },
+  { href: '/map', label: '充電マップ', match: (p: string) => p.startsWith('/map') || p.startsWith('/spots') },
+  { href: '/news', label: 'ニュース', match: (p: string) => p.startsWith('/news') },
+]
+
 export default function Nav() {
   const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    if (query.trim()) router.push(`/?q=${encodeURIComponent(query.trim())}`)
-    else router.push('/')
+    router.push(query.trim() ? `/?q=${encodeURIComponent(query.trim())}` : '/')
   }
 
-  const isMap = pathname.startsWith('/map') || pathname.startsWith('/spots')
-  const isNews = pathname.startsWith('/news')
-
-  const tabStyle = (active: boolean) => ({
-    padding: '5px 11px', borderRadius: 4, fontSize: 12, textDecoration: 'none' as const,
-    color: active ? '#111' : '#888',
-    background: active ? '#f0f0f0' : 'transparent',
-    whiteSpace: 'nowrap' as const,
-  })
+  const isBoard = pathname === '/' || pathname.startsWith('/posts') || pathname.startsWith('/new')
 
   return (
     <nav style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-      height: 64, background: 'rgba(255,255,255,0.95)',
-      backdropFilter: 'blur(12px)',
-      borderBottom: '1px solid #f0f0f0',
-      display: 'flex', alignItems: 'center',
-      padding: '0 16px', gap: 12,
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
+      height: 60, background: 'rgba(13,13,13,0.95)', backdropFilter: 'blur(16px)',
+      borderBottom: '1px solid rgba(255,255,255,0.06)',
+      display: 'flex', alignItems: 'center', padding: '0 20px', gap: 16,
     }}>
-      <Link href="/" style={{
-        fontWeight: 700, fontSize: 14, letterSpacing: '0.18em',
-        color: '#111', textDecoration: 'none', whiteSpace: 'nowrap',
-      }}>
-        TSLA PARK
+      {/* Logo */}
+      <Link href="/" style={{ fontWeight: 700, fontSize: 15, letterSpacing: '0.2em', color: '#F0F0F0', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+        TSLA<span style={{ color: '#CC0000' }}>PARK</span>
       </Link>
 
-      <div style={{ display: 'flex', gap: 2 }}>
-        <Link href="/" style={tabStyle(!isMap && !isNews)}>掲示板</Link>
-        <Link href="/news" style={tabStyle(isNews)}>ニュース</Link>
-        <Link href="/map" style={tabStyle(isMap)}>充電マップ</Link>
+      {/* Desktop menu */}
+      <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+        {MENU.map(m => {
+          const active = m.match(pathname)
+          return (
+            <Link key={m.href} href={m.href} style={{
+              padding: '5px 12px', borderRadius: 6, fontSize: 12, textDecoration: 'none',
+              color: active ? '#F0F0F0' : '#888', fontWeight: active ? 600 : 400,
+              background: active ? 'rgba(255,255,255,0.08)' : 'transparent',
+              borderBottom: active ? '2px solid #CC0000' : '2px solid transparent',
+              transition: '150ms ease',
+            }}>
+              {m.label}
+            </Link>
+          )
+        })}
       </div>
 
-      {!isMap && !isNews && (
-        <form onSubmit={handleSearch} style={{ flex: 1, maxWidth: 320 }}>
-          <input
-            value={query}
-            onChange={e => setQuery(e.target.value)}
+      {/* Search (board only) */}
+      {isBoard && (
+        <form onSubmit={handleSearch} style={{ flex: 1, maxWidth: 300 }}>
+          <input value={query} onChange={e => setQuery(e.target.value)}
             placeholder="キーワード検索..."
-            style={{
-              width: '100%', padding: '7px 12px',
-              border: '1px solid #e8e8e8', borderRadius: 4,
-              fontSize: 13, outline: 'none', fontFamily: 'inherit',
-            }}
+            style={{ width: '100%', padding: '7px 12px', fontSize: 13, outline: 'none', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, color: '#F0F0F0' }}
           />
         </form>
       )}
 
-      <div style={{ marginLeft: 'auto' }}>
+      {/* Right */}
+      <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
         <Link href="/new" style={{
-          padding: '7px 14px', background: '#111', color: '#fff',
-          borderRadius: 4, fontSize: 12, fontWeight: 500,
-          letterSpacing: '0.06em', textDecoration: 'none',
+          padding: '7px 16px', background: '#CC0000', color: '#fff',
+          borderRadius: 8, fontSize: 12, fontWeight: 600, textDecoration: 'none',
+          letterSpacing: '0.04em', transition: '150ms ease',
         }}>
           投稿する
         </Link>

@@ -1,81 +1,52 @@
+'use client'
 import Link from 'next/link'
 import { Post, CATEGORY_LABEL } from '@/lib/supabase'
 
-const CATEGORY_COLOR: Record<string, string> = {
-  charging: '#2563eb',
-  delivery: '#16a34a',
-  issue: '#dc2626',
+const CAT_COLOR: Record<string, string> = {
+  charging: '#3B82F6', delivery: '#10B981', issue: '#EF4444',
 }
 
 export default function PostCard({ post, index }: { post: Post; index: number }) {
-  const date = new Date(post.created_at).toLocaleDateString('ja-JP', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  })
+  const excerpt = post.body.slice(0, 120) + (post.body.length > 120 ? '…' : '')
+  const date = new Date(post.created_at).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })
 
   return (
-    <Link href={`/posts/${post.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <article
-        className="fade-in"
-        style={{
-          padding: '28px 24px',
-          borderBottom: '1px solid #f0f0f0',
-          cursor: 'pointer',
-          transition: 'background 0.15s',
-          animationDelay: `${index * 0.05}s`,
-          animationFillMode: 'both',
-          opacity: 0,
-        }}
-        onMouseEnter={e => (e.currentTarget.style.background = '#f7f7f7')}
-        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+    <Link href={`/posts/${post.id}`} style={{ textDecoration: 'none' }}
+      className="fade-in"
+    >
+      <div style={{
+        background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12,
+        padding: '18px 20px', marginBottom: 10, transition: '150ms ease', cursor: 'pointer',
+        animationDelay: `${index * 30}ms`,
+      }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.14)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)' }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <span style={{
-            fontSize: 9, fontWeight: 500, letterSpacing: '0.18em',
-            color: CATEGORY_COLOR[post.category], textTransform: 'uppercase',
+            fontSize: 9, fontWeight: 700, letterSpacing: '0.12em',
+            color: CAT_COLOR[post.category], background: CAT_COLOR[post.category] + '20',
+            padding: '3px 10px', borderRadius: 20,
           }}>
             {CATEGORY_LABEL[post.category]}
           </span>
-          {post.model && (
-            <span style={{ fontSize: 11, color: '#999', letterSpacing: '0.05em' }}>
-              {post.model}
-            </span>
-          )}
+          {post.model && <span style={{ fontSize: 11, color: '#555' }}>{post.model}</span>}
+          <span style={{ fontSize: 11, color: '#444', marginLeft: 'auto' }}>{date}</span>
         </div>
-
-        <h2 style={{
-          fontSize: 16, fontWeight: 400, letterSpacing: '-0.01em',
-          marginBottom: 8, lineHeight: 1.5,
-        }}>
+        <h3 style={{ fontSize: 15, fontWeight: 600, color: '#F0F0F0', marginBottom: 6, lineHeight: 1.5 }}>
           {post.title}
-        </h2>
-
-        <p style={{
-          fontSize: 13, color: '#666', fontWeight: 300,
-          lineHeight: 1.7, marginBottom: 14,
-          display: '-webkit-box', WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical', overflow: 'hidden',
-        }}>
-          {post.body}
-        </p>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ fontSize: 11, color: '#999' }}>
-            {post.author_name || '匿名'}
-          </span>
-          <span style={{ fontSize: 11, color: '#bbb' }}>{date}</span>
-          <span style={{ fontSize: 11, color: '#999', marginLeft: 'auto' }}>
-            ♡ {post.likes}
-          </span>
-          {post.tags?.map(tag => (
-            <span key={tag} style={{
-              fontSize: 10, color: '#888', letterSpacing: '0.05em',
-              background: '#f4f4f4', padding: '2px 8px', borderRadius: 2,
-            }}>
-              #{tag}
+        </h3>
+        <p style={{ fontSize: 13, color: '#666', lineHeight: 1.7, marginBottom: 10 }}>{excerpt}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 11, color: '#555' }}>{post.author_name || '匿名'}</span>
+          {post.tags?.map(t => (
+            <span key={t} style={{ fontSize: 10, color: '#555', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 10 }}>
+              #{t}
             </span>
           ))}
+          <span style={{ marginLeft: 'auto', fontSize: 12, color: '#555' }}>♡ {post.likes}</span>
         </div>
-      </article>
+      </div>
     </Link>
   )
 }
