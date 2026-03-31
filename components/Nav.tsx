@@ -1,54 +1,91 @@
 'use client'
-import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 
 const MENU = [
-  { href: '/', label: '掲示板', match: (p: string) => p === '/' || p.startsWith('/posts') || p.startsWith('/new') },
-  { href: '/delivery', label: '納車', match: (p: string) => p.startsWith('/delivery') },
-  { href: '/map', label: '充電', match: (p: string) => p.startsWith('/map') || p.startsWith('/spots') },
-  { href: '/news', label: 'ニュース', match: (p: string) => p.startsWith('/news') },
-  { href: '/videos', label: '動画', match: (p: string) => p.startsWith('/videos') },
+  { href: '/', label: 'FEED', match: (p: string) => p === '/' || p.startsWith('/posts') || p.startsWith('/new') },
+  { href: '/delivery', label: 'DELIVERY', match: (p: string) => p.startsWith('/delivery') },
+  { href: '/map', label: 'CHARGE', match: (p: string) => p.startsWith('/map') || p.startsWith('/spots') },
+  { href: '/news', label: 'NEWS', match: (p: string) => p.startsWith('/news') },
+  { href: '/videos', label: 'VIDEO', match: (p: string) => p.startsWith('/videos') },
+  { href: '/referral', label: 'REFER', match: (p: string) => p.startsWith('/referral') },
 ]
 
 export default function Nav() {
-  const [query, setQuery] = useState('')
-  const router = useRouter()
   const pathname = usePathname()
-  const isBoard = pathname === '/' || pathname.startsWith('/posts') || pathname.startsWith('/new')
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    router.push(query.trim() ? `/?q=${encodeURIComponent(query.trim())}` : '/')
-  }
-
   return (
-    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, height: 60, background: 'rgba(13,13,13,0.97)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12 }}>
-      <Link href="/" style={{ fontWeight: 800, fontSize: 14, letterSpacing: '0.2em', color: '#F0F0F0', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
-        TSLA<span style={{ color: '#CC0000' }}>PARK</span>
+    <nav style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
+      height: 60, background: 'rgba(10,10,10,0.97)',
+      borderBottom: '2px solid #C0C0C0',
+      display: 'flex', alignItems: 'center', padding: '0 16px', gap: 16,
+    }}>
+      {/* Logo */}
+      <Link href="/" style={{ textDecoration: 'none', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.2 }}>
+        <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 11, color: '#C0C0C0', letterSpacing: '0.1em' }}>TSLA</span>
+        <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#00FFFF', letterSpacing: '0.15em' }}>PARK</span>
       </Link>
 
-      <div style={{ display: 'flex', gap: 0, flexShrink: 0 }}>
+      {/* Divider */}
+      <div style={{ width: 2, height: 32, background: '#404040', flexShrink: 0 }} />
+
+      {/* Menu */}
+      <div style={{ display: 'flex', gap: 0, overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any, scrollbarWidth: 'none' as any, flex: 1, minWidth: 0 }}>
         {MENU.map(m => {
           const active = m.match(pathname)
           return (
-            <Link key={m.href} href={m.href} style={{ padding: '5px 10px', fontSize: 12, textDecoration: 'none', color: active ? '#F0F0F0' : '#666', fontWeight: active ? 600 : 400, borderBottom: `2px solid ${active ? '#CC0000' : 'transparent'}`, transition: '150ms ease', whiteSpace: 'nowrap' }}>
-              {m.label}
+            <Link key={m.href} href={m.href} style={{
+              fontFamily: "'Press Start 2P', monospace",
+              padding: '4px 10px', fontSize: 8,
+              textDecoration: 'none',
+              color: active ? '#00FFFF' : '#808080',
+              borderBottom: `2px solid ${active ? '#00FFFF' : 'transparent'}`,
+              whiteSpace: 'nowrap', flexShrink: 0,
+              transition: '120ms',
+            }}>
+              {active ? '> ' : ''}{m.label}
             </Link>
           )
         })}
       </div>
 
-      {isBoard && (
-        <form onSubmit={handleSearch} style={{ flex: 1, maxWidth: 280 }}>
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="検索..." style={{ width: '100%', padding: '6px 12px', fontSize: 12, outline: 'none', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, color: '#F0F0F0', fontFamily: 'inherit' }} />
-        </form>
-      )}
-
-      <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
-        <Link href="/new" style={{ padding: '7px 14px', background: '#CC0000', color: '#fff', borderRadius: 8, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
-          投稿
+      {/* X link + Post button */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto', flexShrink: 0 }}>
+        <a href="https://x.com/tslapark" target="_blank" rel="noopener noreferrer"
+          style={{ display: 'flex', alignItems: 'center', color: '#808080', transition: '150ms' }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#00FFFF')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#808080')}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+        </a>
+        <Link href="/profile" style={{
+          display: 'flex', alignItems: 'center', color: '#808080', transition: '150ms',
+        }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#00FFFF')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#808080')}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+          </svg>
         </Link>
+        <Link href="/new" style={{
+          fontFamily: "'Press Start 2P', monospace",
+          padding: '6px 12px', fontSize: 8,
+          background: '#C0C0C0', color: '#000',
+          border: '2px solid #C0C0C0',
+          textDecoration: 'none', whiteSpace: 'nowrap',
+          transition: '120ms',
+        }}
+          onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
+            e.currentTarget.style.background = '#00FFFF'
+            e.currentTarget.style.borderColor = '#00FFFF'
+          }}
+          onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
+            e.currentTarget.style.background = '#C0C0C0'
+            e.currentTarget.style.borderColor = '#C0C0C0'
+          }}
+        >POST</Link>
       </div>
     </nav>
   )
