@@ -33,6 +33,12 @@ interface ReferralData {
 
 const TESLA_REFERRAL_BASE = 'https://www.tesla.com/referral/'
 
+// フルURLまたはコードのみに対応
+function buildReferralUrl(code: string): string {
+  if (code.startsWith('http')) return code
+  return TESLA_REFERRAL_BASE + code
+}
+
 export default function ReferralPage() {
   const [data, setData] = useState<ReferralData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -87,7 +93,7 @@ export default function ReferralPage() {
       body: JSON.stringify({ referral_code: data.featured.referral_code }),
     })
     setClicked(true)
-    window.open(TESLA_REFERRAL_BASE + data.featured.referral_code, '_blank', 'noopener,noreferrer')
+    window.open(buildReferralUrl(data.featured.referral_code), '_blank', 'noopener,noreferrer')
   }
 
   return (
