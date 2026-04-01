@@ -33,6 +33,13 @@ export default function PostsSection() {
   const [isPulling, setIsPulling] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const touchStartY = useRef(0)
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setUser(user))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null))
+    return () => subscription.unsubscribe()
+  }, [])
 
   const fetchPosts = async () => {
     let query = supabase.from('posts').select('*').order('created_at', { ascending: false })
@@ -133,9 +140,31 @@ export default function PostsSection() {
             >
               &gt; POST
             </Link>
-            <div style={{ fontFamily: "'Press Start 2P', monospace", padding: '12px 20px', border: '2px solid #2A2A2A', fontSize: 9, color: '#404040' }}>
-              {total} POSTS
-            </div>
+            {user ? (
+              <Link href="/profile" style={{
+                fontFamily: "'Press Start 2P', monospace",
+                padding: '12px 20px', background: 'transparent', color: '#00FFFF',
+                border: '2px solid #00FFFF', fontSize: 9, textDecoration: 'none',
+                transition: '120ms',
+              }}
+                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = '#00FFFF'; e.currentTarget.style.color = '#000' }}
+                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#00FFFF' }}
+              >
+                &gt; PROFILE
+              </Link>
+            ) : (
+              <Link href="/auth" style={{
+                fontFamily: "'Press Start 2P', monospace",
+                padding: '12px 20px', background: 'transparent', color: '#00FFFF',
+                border: '2px solid #00FFFF', fontSize: 9, textDecoration: 'none',
+                transition: '120ms',
+              }}
+                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = '#00FFFF'; e.currentTarget.style.color = '#000' }}
+                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#00FFFF' }}
+              >
+                &gt; LOGIN
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -178,6 +207,12 @@ export default function PostsSection() {
 
       {/* Feed */}
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
+        {!loading && !q && (
+          <div style={{ padding: '12px 20px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#404040' }}>//</span>
+            <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#404040' }}>{total} POSTS</span>
+          </div>
+        )}
         {loading ? (
           <div style={{ padding: '80px 0', textAlign: 'center' }}>
             <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: '#404040' }}>LOADING<span className="blink">_</span></span>
