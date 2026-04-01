@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import XPBar from '@/components/XPBar'
 
 const MODELS = ['Model Y', 'Model 3']
-const MODEL_COLOR: Record<string, string> = { 'Model Y': '#CC0000', 'Model 3': '#3B82F6' }
+const MODEL_COLOR: Record<string, string> = { 'Model Y': '#A0A0A0', 'Model 3': '#3B82F6' }
 
 const MILESTONES = [
   { key: 'vin_date', label: 'VIN', color: '#F59E0B' },
@@ -28,31 +30,49 @@ function GanttChart({ reports }: { reports: any[] }) {
   if (reports.length === 0) return null
 
   const today = Date.now()
-  // 全体の時間軸範囲を計算
-  const allDates = reports.map(r => toMs(r.order_date)).filter(Boolean) as number[]
-  const minMs = Math.min(...allDates)
-  const maxMs = Math.max(today, ...reports.map(r => toMs(r.delivery_date) || today))
+  const todayDate = new Date()
+
+  // 表示範囲：最も古い注文日の1ヶ月前 〜 今日+2ヶ月
+  const allOrderMs = reports.map(r => toMs(r.order_date)).filter(Boolean) as number[]
+  const startDate = new Date(Math.min(...allOrderMs))
+  startDate.setDate(1)
+  startDate.setMonth(startDate.getMonth() - 1)
+  const endDate = new Date(todayDate)
+  endDate.setMonth(endDate.getMonth() + 2)
+  endDate.setDate(1)
+  // 納車済みで範囲外のものも含める
+  const maxDelivery = Math.max(...reports.map(r => toMs(r.delivery_date) || 0).filter(Boolean))
+  if (maxDelivery > endDate.getTime()) {
+    const d = new Date(maxDelivery)
+    d.setMonth(d.getMonth() + 1)
+    d.setDate(1)
+    endDate.setTime(d.getTime())
+  }
+
+  const minMs = startDate.getTime()
+  const maxMs = endDate.getTime()
   const rangeMs = maxMs - minMs || 1
+  const toX = (ms: number) => Math.max(0, Math.min(100, ((ms - minMs) / rangeMs) * 100))
+  const todayX = toX(today)
 
-  const toX = (ms: number) => ((ms - minMs) / rangeMs) * 100
-
-  // X軸ラベル（月単位）
+  // 月ラベル生成（年が変わる月は年も表示）
   const labels: { label: string; x: number }[] = []
-  const start = new Date(minMs)
-  start.setDate(1)
-  while (start.getTime() <= maxMs) {
-    labels.push({
-      label: `${start.getMonth() + 1}月`,
-      x: toX(start.getTime()),
-    })
-    start.setMonth(start.getMonth() + 1)
+  const d = new Date(startDate)
+  let prevYear = -1
+  while (d.getTime() < maxMs) {
+    const yr = d.getFullYear()
+    const mo = d.getMonth() + 1
+    const label = yr !== prevYear ? `${yr}/${mo}月` : `${mo}月`
+    labels.push({ label, x: toX(d.getTime()) })
+    prevYear = yr
+    d.setMonth(d.getMonth() + 1)
   }
 
   return (
     <div style={{ background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px 24px', marginBottom: 36, overflowX: 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 16, flexWrap: 'wrap' }}>
         <p style={{ fontSize: 13, fontWeight: 600 }}>納車進捗ガントチャート</p>
-        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {MODELS.map(m => (
             <div key={m} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 12, height: 4, borderRadius: 2, background: MODEL_COLOR[m] }} />
@@ -66,141 +86,95 @@ function GanttChart({ reports }: { reports: any[] }) {
             </div>
           ))}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', border: '2px solid #10B981' }} />
-            <span style={{ fontSize: 11, color: '#888' }}>納車🚗</span>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981' }} />
+            <span style={{ fontSize: 11, color: '#888' }}>納車</span>
           </div>
         </div>
       </div>
 
-      <div style={{ minWidth: 500 }}>
-        {/* X軸ラベル */}
-        <div style={{ position: 'relative', height: 20, marginBottom: 4, marginLeft: 80 }}>
-          {labels.map((l, i) => (
-            <span key={i} style={{
-              position: 'absolute', left: `${l.x}%`,
-              fontSize: 9, color: '#555', transform: 'translateX(-50%)',
-              whiteSpace: 'nowrap',
-            }}>{l.label}</span>
+      <div style={{ minWidth: 500, display: 'flex' }}>
+        {/* 左ラベル列 */}
+        <div style={{ width: 80, flexShrink: 0 }}>
+          <div style={{ height: 24 }} />
+          {reports.map(r => (
+            <div key={r.id} style={{ height: 36, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <p style={{ fontSize: 10, color: '#888', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.model}</p>
+              <p style={{ fontSize: 9, color: '#555', margin: 0 }}>{r.grade || ''}</p>
+            </div>
           ))}
         </div>
 
-        {/* 今日線 */}
-        <div style={{ position: 'relative' }}>
-          <div style={{
-            position: 'absolute', left: `calc(80px + ${toX(today)}% * (100% - 80px) / 100)`,
-            top: 0, bottom: 0, width: 1,
-            background: 'rgba(255,255,255,0.15)', zIndex: 1, pointerEvents: 'none',
-          }} />
+        {/* 右バー列 */}
+        <div style={{ flex: 1, position: 'relative' }}>
+          {/* X軸ラベル */}
+          <div style={{ position: 'relative', height: 28 }}>
+            {labels.map((l, i) => (
+              <span key={i} style={{ position: 'absolute', left: `${l.x}%`, top: 8, fontSize: 9, color: '#555', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>{l.label}</span>
+            ))}
+            {/* 今日ラベル（X軸上） */}
+            <span style={{ position: 'absolute', left: `${todayX}%`, top: 6, fontSize: 9, fontWeight: 700, color: '#E0E0E0', transform: 'translateX(-50%)', whiteSpace: 'nowrap', background: '#2A2A2A', padding: '1px 5px', borderRadius: 3 }}>TODAY</span>
+          </div>
 
-          {/* 各レポートの行 */}
+          {/* 今日線 */}
+          <div style={{ position: 'absolute', left: `${todayX}%`, top: 28, bottom: 0, width: 2, background: 'rgba(220,220,220,0.4)', zIndex: 1 }} />
+
+          {/* バー行 */}
           {reports.map(r => {
             const orderMs = toMs(r.order_date)
             if (!orderMs) return null
             const endMs = toMs(r.delivery_date) || today
             const barLeft = toX(orderMs)
-            const barRight = toX(endMs)
-            const barWidth = Math.max(barRight - barLeft, 0.5)
+            const barWidth = Math.max(toX(endMs) - barLeft, 0.5)
             const isComplete = !!r.delivery_date
             const waitDays = calcDays(r.order_date, r.delivery_date)
             const color = MODEL_COLOR[r.model] || '#888'
-
             return (
-              <div key={r.id} style={{ display: 'flex', alignItems: 'center', marginBottom: 10, minHeight: 32 }}>
-                {/* 左ラベル */}
-                <div style={{ width: 80, flexShrink: 0, paddingRight: 10 }}>
-                  <p style={{ fontSize: 10, color: '#888', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {r.model}
-                  </p>
-                  <p style={{ fontSize: 9, color: '#555', margin: 0 }}>{r.grade || ''}</p>
+              <div key={r.id} style={{ position: 'relative', height: 36, display: 'flex', alignItems: 'center' }}>
+                <div style={{
+                  position: 'absolute', left: `${barLeft}%`, width: `${barWidth}%`, height: 24, borderRadius: 5,
+                  background: isComplete ? `linear-gradient(90deg, ${color}70, ${color})` : `repeating-linear-gradient(90deg, ${color}55, ${color}55 8px, ${color}28 8px, ${color}28 16px)`,
+                  display: 'flex', alignItems: 'center', paddingLeft: 8, overflow: 'hidden',
+                }}>
+                  {waitDays !== null && (
+                    <span style={{ fontSize: 10, color: '#fff', fontWeight: 700, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{waitDays}日</span>
+                  )}
                 </div>
-
-                {/* バー */}
-                <div style={{ flex: 1, position: 'relative', height: 28 }}>
-                  {/* バー本体 */}
-                  <div style={{
-                    position: 'absolute',
-                    left: `${barLeft}%`,
-                    width: `${barWidth}%`,
-                    height: '100%',
-                    background: isComplete
-                      ? `linear-gradient(90deg, ${color}60, ${color})`
-                      : `repeating-linear-gradient(90deg, ${color}50, ${color}50 8px, ${color}25 8px, ${color}25 16px)`,
-                    borderRadius: 4,
-                    display: 'flex', alignItems: 'center',
-                    paddingLeft: 6,
-                    overflow: 'hidden',
-                  }}>
-                    {waitDays !== null && (
-                      <span style={{ fontSize: 10, color: '#fff', fontWeight: 700, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
-                        {waitDays}日
-                      </span>
-                    )}
-                  </div>
-
-                  {/* マイルストーン */}
-                  {MILESTONES.map(ms => {
-                    const msMs = toMs(r[ms.key])
-                    if (!msMs) return null
-                    const x = toX(msMs)
-                    return (
-                      <div key={ms.key} title={`${ms.label}: ${new Date(msMs).toLocaleDateString('ja-JP')}`} style={{
-                        position: 'absolute',
-                        left: `${x}%`,
-                        top: '50%', transform: 'translate(-50%, -50%)',
-                        width: 8, height: 8, borderRadius: '50%',
-                        background: ms.color,
-                        border: '1.5px solid #1A1A1A',
-                        zIndex: 2,
-                      }} />
-                    )
-                  })}
-
-                  {/* 納車マーク */}
-                  {r.delivery_date && (
-                    <div title={`納車: ${new Date(r.delivery_date).toLocaleDateString('ja-JP')}`} style={{
-                      position: 'absolute',
-                      left: `${toX(toMs(r.delivery_date)!)}%`,
-                      top: '50%', transform: 'translate(-50%, -50%)',
-                      width: 12, height: 12, borderRadius: '50%',
-                      background: '#10B981',
-                      border: '2px solid #1A1A1A',
-                      zIndex: 3,
+                {MILESTONES.map(ms => {
+                  const msMs = toMs(r[ms.key])
+                  if (!msMs) return null
+                  return (
+                    <div key={ms.key} title={`${ms.label}: ${new Date(msMs).toLocaleDateString('ja-JP')}`} style={{
+                      position: 'absolute', left: `${toX(msMs)}%`, top: '50%', transform: 'translate(-50%, -50%)',
+                      width: 9, height: 9, borderRadius: '50%', background: ms.color, border: '2px solid #1A1A1A', zIndex: 2,
                     }} />
-                  )}
-                </div>
-
-                {/* 右ラベル */}
-                <div style={{ width: 50, flexShrink: 0, paddingLeft: 8, textAlign: 'right' }}>
-                  {isComplete ? (
-                    <span style={{ fontSize: 11, color: '#10B981', fontWeight: 700 }}>完了</span>
-                  ) : (
-                    <span style={{ fontSize: 11, color: '#F59E0B' }}>待中</span>
-                  )}
-                </div>
+                  )
+                })}
+                {r.delivery_date && (
+                  <div title={`納車: ${new Date(r.delivery_date).toLocaleDateString('ja-JP')}`} style={{
+                    position: 'absolute', left: `${toX(toMs(r.delivery_date)!)}%`, top: '50%', transform: 'translate(-50%, -50%)',
+                    width: 14, height: 14, borderRadius: '50%', background: '#10B981', border: '2px solid #1A1A1A', zIndex: 3,
+                  }} />
+                )}
               </div>
             )
           })}
-
-          {/* 今日ラベル */}
-          <div style={{
-            position: 'absolute',
-            left: `calc(80px + ${toX(today)}% * (100% - 80px) / 100)`,
-            top: -20, transform: 'translateX(-50%)',
-            fontSize: 9, color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap',
-          }}>今日</div>
         </div>
       </div>
     </div>
   )
 }
 
+
 const card = { background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px 22px' }
 
 export default function DeliveryPage() {
+  const router = useRouter()
   const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [myNickname, setMyNickname] = useState('')
 
   useEffect(() => {
+    setMyNickname(localStorage.getItem('delivery_nickname') || '')
     supabase.from('delivery_reports').select('*').order('order_date', { ascending: true }).then(({ data }) => {
       setReports(data || [])
       setLoading(false)
@@ -233,11 +207,11 @@ export default function DeliveryPage() {
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px 80px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <p style={{ fontSize: 10, letterSpacing: '0.2em', color: '#CC0000', marginBottom: 6, fontWeight: 600 }}>DELIVERY TRACKER</p>
+          <p style={{ fontSize: 10, letterSpacing: '0.2em', color: '#A0A0A0', marginBottom: 6, fontWeight: 600 }}>DELIVERY TRACKER</p>
           <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em' }}>納車待ちトラッカー</h1>
           <p style={{ fontSize: 13, color: '#888', marginTop: 4 }}>オーナー報告 {reports.length}件</p>
         </div>
-        <Link href="/delivery/new" style={{ padding: '10px 22px', background: '#CC0000', color: '#fff', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+        <Link href="/delivery/new" style={{ padding: '10px 22px', background: '#A0A0A0', color: '#fff', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
           ＋ 進捗を報告
         </Link>
       </div>
@@ -286,7 +260,7 @@ export default function DeliveryPage() {
       {!loading && reports.length === 0 && (
         <div style={{ ...card, textAlign: 'center', padding: '48px 24px' }}>
           <p style={{ color: '#444', fontSize: 14, marginBottom: 16 }}>まだ報告がありません</p>
-          <Link href="/delivery/new" style={{ color: '#CC0000', fontSize: 13, textDecoration: 'none' }}>最初に報告する →</Link>
+          <Link href="/delivery/new" style={{ color: '#A0A0A0', fontSize: 13, textDecoration: 'none' }}>最初に報告する →</Link>
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -294,13 +268,18 @@ export default function DeliveryPage() {
           const waitDays = calcDays(r.order_date, r.delivery_date)
           const isComplete = !!r.delivery_date
           const color = MODEL_COLOR[r.model] || '#888'
+          const isMyPost = myNickname && r.author_name === myNickname
           return (
-            <div key={r.id} style={card}>
+            <div key={r.id} style={{ ...card, border: isMyPost ? '1px solid rgba(255,255,255,0.25)' : card.border }}>
+              {isMyPost && (
+                <div style={{ fontSize: 10, color: '#A0A0A0', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 8 }}>👤 あなたの投稿</div>
+              )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
                 <span style={{ background: color + '25', color, borderRadius: 20, padding: '3px 12px', fontSize: 12, fontWeight: 700 }}>{r.model}</span>
                 {r.grade && <span style={{ fontSize: 12, color: '#888' }}>{r.grade}</span>}
                 {r.color && <span style={{ fontSize: 12, color: '#666' }}>· {r.color}</span>}
                 {r.region && <span style={{ fontSize: 12, color: '#666' }}>· {r.region}</span>}
+                {r.author_name && r.author_name !== '匿名' && <span style={{ fontSize: 11, color: '#555' }}>by {r.author_name}</span>}
                 {isComplete && waitDays !== null ? (
                   <div style={{ marginLeft: 'auto' }}>
                     <span style={{ fontSize: 36, fontWeight: 800, color: '#10B981', letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{waitDays}</span>
@@ -326,7 +305,20 @@ export default function DeliveryPage() {
                   </div>
                 ))}
               </div>
+              <XPBar
+                orderDate={r.order_date}
+                vinDate={r.vin_date}
+                docsDate={r.docs_date}
+                deliveryDate={r.delivery_date}
+                model={r.model}
+              />
               {r.note && <p style={{ fontSize: 13, color: '#666', lineHeight: 1.7, marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.05)' }}>{r.note}</p>}
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'flex-end' }}>
+                <button onClick={() => router.push(`/delivery/edit?id=${r.id}`)}
+                  style={{ padding: '5px 14px', fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  ✏️ 修正する
+                </button>
+              </div>
             </div>
           )
         })}

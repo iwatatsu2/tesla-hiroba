@@ -33,7 +33,12 @@ export default function NewDelivery() {
   const [region, setRegion] = useState('')
   const [color, setColor] = useState('')
   const [note, setNote] = useState('')
+  const [authorName, setAuthorName] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('delivery_nickname') || ''
+    return ''
+  })
   const [submitting, setSubmitting] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const setDate = (key: string, val: string) => setDates(prev => ({ ...prev, [key]: val }))
 
@@ -41,7 +46,12 @@ export default function NewDelivery() {
     e.preventDefault()
     if (!dates.order_date) return
     setSubmitting(true)
-    await supabase.from('delivery_reports').insert({
+    setErrorMsg('')
+    const nickname = authorName.trim() || '匿名'
+    if (typeof window !== 'undefined' && authorName.trim()) {
+      localStorage.setItem('delivery_nickname', authorName.trim())
+    }
+    const { error } = await supabase.from('delivery_reports').insert({
       model, grade: grade || null,
       order_date: dates.order_date,
       vin_date: dates.vin_date || null,
@@ -49,25 +59,42 @@ export default function NewDelivery() {
       confirmed_date: dates.confirmed_date || null,
       delivery_date: dates.delivery_date || null,
       region: region || null, color: color || null, note: note || null,
+      author_name: nickname,
     })
+    if (error) {
+      setErrorMsg(`送信エラー: ${error.message}`)
+      setSubmitting(false)
+      return
+    }
     router.push('/delivery')
   }
 
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', padding: '40px 20px 80px' }}>
-      <p style={{ fontSize: 10, letterSpacing: '0.2em', color: '#CC0000', marginBottom: 8, fontWeight: 600 }}>DELIVERY TRACKER</p>
+      <p style={{ fontSize: 10, letterSpacing: '0.2em', color: '#A0A0A0', marginBottom: 8, fontWeight: 600 }}>DELIVERY TRACKER</p>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>納車進捗を報告する</h1>
       <p style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>途中の段階でもOK！分かる日付だけ入力してください</p>
       <p style={{ fontSize: 12, color: '#555', marginBottom: 28 }}>みんなの進捗データが全員の役に立ちます</p>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* ニックネーム */}
+        <div>
+          <label style={lbl}>ニックネーム（任意）</label>
+          <input
+            type="text" value={authorName} onChange={e => setAuthorName(e.target.value)}
+            placeholder="例：東京のModel Yオーナー"
+            style={{ ...inp }}
+          />
+          <p style={{ fontSize: 11, color: '#555', marginTop: 6 }}>入力すると次回から自動入力されます。自分の投稿を識別するためにお使いください。</p>
+        </div>
+
         {/* モデル */}
         <div>
           <label style={lbl}>モデル *</label>
           <div style={{ display: 'flex', gap: 10 }}>
             {MODELS.map(m => (
               <button key={m} type="button" onClick={() => { setModel(m); setGrade('') }}
-                style={{ flex: 1, padding: '10px 0', borderRadius: 8, fontSize: 13, cursor: 'pointer', border: 'none', background: model === m ? '#CC0000' : '#242424', color: model === m ? '#fff' : '#888', fontWeight: 600, fontFamily: 'inherit', transition: '150ms ease' }}>
+                style={{ flex: 1, padding: '10px 0', borderRadius: 8, fontSize: 13, cursor: 'pointer', border: 'none', background: model === m ? '#A0A0A0' : '#242424', color: model === m ? '#fff' : '#888', fontWeight: 600, fontFamily: 'inherit', transition: '150ms ease' }}>
                 {m}
               </button>
             ))}
@@ -80,7 +107,7 @@ export default function NewDelivery() {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {(GRADES[model] || []).map(g => (
               <button key={g} type="button" onClick={() => setGrade(g === grade ? '' : g)}
-                style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: `1px solid ${grade === g ? '#CC0000' : 'rgba(255,255,255,0.1)'}`, background: grade === g ? '#CC000020' : 'transparent', color: grade === g ? '#CC0000' : '#888', fontFamily: 'inherit', transition: '150ms ease' }}>
+                style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: `1px solid ${grade === g ? '#A0A0A0' : 'rgba(255,255,255,0.1)'}`, background: grade === g ? '#A0A0A020' : 'transparent', color: grade === g ? '#A0A0A0' : '#888', fontFamily: 'inherit', transition: '150ms ease' }}>
                 {g}
               </button>
             ))}
@@ -96,7 +123,7 @@ export default function NewDelivery() {
                 <span style={{ fontSize: 20, flexShrink: 0 }}>{stage.icon}</span>
                 <div style={{ flex: 1 }}>
                   <label style={{ fontSize: 12, color: dates[stage.key] ? '#F0F0F0' : '#666', fontWeight: dates[stage.key] ? 600 : 400, display: 'block', marginBottom: 4 }}>
-                    {stage.label}{stage.required && <span style={{ color: '#CC0000' }}>*</span>}
+                    {stage.label}{stage.required && <span style={{ color: '#A0A0A0' }}>*</span>}
                   </label>
                   <input type="date" value={dates[stage.key] || ''} onChange={e => setDate(stage.key, e.target.value)}
                     required={stage.required}
@@ -136,12 +163,12 @@ export default function NewDelivery() {
 
         <div style={{ background: '#242424', borderRadius: 8, padding: '12px 14px' }}>
           <p style={{ fontSize: 11, color: '#555', lineHeight: 1.7, margin: 0 }}>
-            投稿内容はユーザーの任意情報です。正確性を保証するものではありません。売買・リファーラルコードの掲載は禁止です。
+            投稿内容はユーザーの任意情報です。正確性を保証するものではありません。売買・リファーラルコード・外部リンクの掲載は禁止です。
           </p>
         </div>
 
         <button type="submit" disabled={submitting || !dates.order_date}
-          style={{ padding: '14px 0', background: submitting || !dates.order_date ? '#333' : '#CC0000', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: submitting || !dates.order_date ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+          style={{ padding: '14px 0', background: submitting || !dates.order_date ? '#333' : '#A0A0A0', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: submitting || !dates.order_date ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
           {submitting ? '送信中...' : '報告する'}
         </button>
       </form>

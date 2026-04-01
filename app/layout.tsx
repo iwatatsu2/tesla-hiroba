@@ -1,24 +1,34 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import { Noto_Sans_JP } from 'next/font/google'
 import './globals.css'
 import Nav from '@/components/Nav'
+import PixelBar from '@/components/PixelBar'
 import Footer from '@/components/Footer'
-
-const inter = Inter({ subsets: ['latin'], display: 'swap' })
-const noto = Noto_Sans_JP({ subsets: ['latin'], weight: ['400','500','700'], display: 'swap' })
+import StartScreen from '@/components/StartScreen'
 
 export const metadata: Metadata = {
-  title: 'TSLA PARK – テスラオーナーコミュニティ',
-  description: 'テスラオーナーのための情報共有・充電マップ・納車トラッカー',
+  title: 'TSLA PARK',
+  description: 'テスラオーナーのためのコミュニティ',
+  manifest: '/manifest.json',
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'TSLA' },
+  icons: { icon: '/icon.svg', apple: '/icon.svg' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja">
-      <body style={{ fontFamily: `${inter.style.fontFamily}, ${noto.style.fontFamily}, sans-serif` }}>
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="TSLA" />
+        <meta name="theme-color" content="#0A0A0A" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
+        <script async src="https://platform.twitter.com/widgets.js" charSet="utf-8"></script>
+      </head>
+      <body>
+        <StartScreen />
         <Nav />
         <main style={{ paddingTop: 60, minHeight: '100vh' }}>{children}</main>
+        <PixelBar />
         <Footer />
       </body>
     </html>

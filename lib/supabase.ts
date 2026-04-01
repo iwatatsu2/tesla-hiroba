@@ -5,7 +5,7 @@ export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-export type Category = 'charging' | 'delivery' | 'issue'
+export type Category = 'charging' | 'issue' | 'software' | 'cost' | 'trip' | 'accessory' | 'insurance' | 'question' | 'general'
 
 export interface Post {
   id: string
@@ -31,14 +31,38 @@ export interface Comment {
 
 export const CATEGORY_LABEL: Record<Category, string> = {
   charging: 'CHARGING',
-  delivery: 'DELIVERY',
   issue: 'SERVICE',
+  software: 'SOFTWARE',
+  cost: 'COST',
+  trip: 'TRIP',
+  accessory: 'ACCESSORY',
+  insurance: 'INSURANCE',
+  question: 'Q&A',
+  general: 'GENERAL',
 }
 
 export const CATEGORY_JP: Record<Category, string> = {
   charging: '充電体験',
-  delivery: '納車待ち',
   issue: '不具合・修理',
+  software: 'ソフトウェア・OTA',
+  cost: '維持費・保険・税金',
+  trip: 'ドライブ・旅行',
+  accessory: 'アクセサリー・カスタム',
+  insurance: '車両保険',
+  question: '質問・相談',
+  general: '雑談',
+}
+
+export const CATEGORY_COLOR: Record<Category, string> = {
+  charging: '#3B82F6',
+  issue: '#EF4444',
+  software: '#8B5CF6',
+  cost: '#F59E0B',
+  trip: '#10B981',
+  accessory: '#EC4899',
+  insurance: '#06B6D4',
+  question: '#F97316',
+  general: '#6B7280',
 }
 
 export const MODELS = ['Model 3', 'Model Y', 'Model S', 'Model X', 'Cybertruck']
