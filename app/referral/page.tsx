@@ -214,7 +214,7 @@ export default function ReferralPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 13, color: r.is_featured ? '#00FFFF' : '#E0E0E0', fontWeight: r.is_featured ? 600 : 400 }}>
-                        {`USER_${r.rank.toString().padStart(3, '0')}`}
+                        {r.display_name || `USER_${r.rank.toString().padStart(3, '0')}`}
                       </span>
                       {r.is_featured && (
                         <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 6, color: '#000', background: '#00FFFF', padding: '2px 6px' }}>NOW</span>
