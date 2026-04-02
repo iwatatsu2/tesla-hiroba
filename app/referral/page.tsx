@@ -126,17 +126,7 @@ export default function ReferralPage() {
             <div style={{ position: 'absolute', top: -10, left: 16, background: '#0A0A0A', padding: '0 8px' }}>
               <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#00FFFF' }}>NOW FEATURED</span>
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 11, color: '#606060', marginBottom: 4 }}>掲載中のオーナー</p>
-              <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: '#E0E0E0', marginBottom: 2 }}>
-                {data.featured.display_name || 'ANONYMOUS'}
-              </p>
-              <p style={{ fontSize: 10, color: '#404040' }}>SCORE: {data.featured.score}</p>
-            </div>
-
-            <div style={{ background: '#111', border: '1px solid #2A2A2A', padding: '12px 16px', marginBottom: 20, fontFamily: "'Press Start 2P', monospace", fontSize: 12, color: '#00FFFF', letterSpacing: '0.1em', wordBreak: 'break-all' }}>
-              {data.featured.referral_code}
-            </div>
+            <p style={{ fontSize: 12, color: '#606060', marginBottom: 20 }}>現在掲載中の紹介コードです。以下のボタンから注文してください。</p>
 
             <div style={{ marginBottom: 16, padding: '10px 12px', background: 'rgba(255,107,53,0.08)', border: '1px solid rgba(255,107,53,0.2)' }}>
               <p style={{ fontSize: 11, color: '#FF6B35', lineHeight: 1.8, margin: 0 }}>
@@ -224,7 +214,7 @@ export default function ReferralPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 13, color: r.is_featured ? '#00FFFF' : '#E0E0E0', fontWeight: r.is_featured ? 600 : 400 }}>
-                        {r.display_name || 'ANONYMOUS'}
+                        {`USER_${r.rank.toString().padStart(3, '0')}`}
                       </span>
                       {r.is_featured && (
                         <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 6, color: '#000', background: '#00FFFF', padding: '2px 6px' }}>NOW</span>
@@ -265,7 +255,7 @@ export default function ReferralPage() {
                     padding: '10px 0', borderBottom: '1px solid #111',
                   }}>
                     <span style={{ fontSize: 10, color: '#303030', whiteSpace: 'nowrap', minWidth: 90 }}>{dateStr}</span>
-                    <span style={{ flex: 1, fontSize: 13, color: '#A0A0A0' }}>{log.display_name || 'ANONYMOUS'}</span>
+                    <span style={{ flex: 1, fontSize: 13, color: '#A0A0A0' }}>OWNER</span>
                     {log.used ? (
                       <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 6, color: '#FF6B35', border: '1px solid #FF6B35', padding: '2px 6px', whiteSpace: 'nowrap' }}>USED</span>
                     ) : (
