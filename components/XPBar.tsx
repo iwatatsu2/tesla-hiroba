@@ -77,6 +77,7 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
             height: 28,
             imageRendering: 'pixelated',
             zIndex: 2,
+            mixBlendMode: 'screen',
             transition: 'left 0.5s ease',
           }}
         />
