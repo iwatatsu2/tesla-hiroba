@@ -24,6 +24,28 @@ export default function NewPost() {
   }
 
   const [errorMsg, setErrorMsg] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiDone, setAiDone] = useState(false)
+
+  const handleAiAssist = async () => {
+    if (!title && !body) return
+    setAiLoading(true)
+    setAiDone(false)
+    try {
+      const res = await fetch('/api/ai-assist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body, category }),
+      })
+      const data = await res.json()
+      if (data.title) setTitle(data.title)
+      if (data.body) setBody(data.body)
+      setAiDone(true)
+      setTimeout(() => setAiDone(false), 3000)
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   const doSubmit = async () => {
     if (!title.trim() || submitting) return
@@ -33,7 +55,7 @@ export default function NewPost() {
     if (typeof window !== 'undefined' && authorName.trim()) {
       localStorage.setItem('post_nickname', authorName.trim())
     }
-    const { error } = await supabase.from('posts').insert({
+    const { data: inserted, error } = await supabase.from('posts').insert({
       category,
       title: title.trim(),
       body: body.trim() || title.trim(),
@@ -42,11 +64,18 @@ export default function NewPost() {
       author_id: null,
       author_name: nickname,
       likes: 0,
-    })
+    }).select().single()
     if (error) {
       setErrorMsg(`エラー: ${error.message}`)
       setSubmitting(false)
       return
+    }
+    if (inserted) {
+      fetch('/api/embed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: inserted.id, title: inserted.title, body: inserted.body }),
+      })
     }
     router.push('/')
   }
@@ -125,6 +154,30 @@ export default function NewPost() {
           <div style={{ textAlign: 'right', fontSize: 11, color: charCount > 380 ? '#E0E0E0' : '#444' }}>
             {charCount} / 400
           </div>
+        </div>
+
+        {/* AIアシスト */}
+        <div style={{ marginBottom: 20 }}>
+          <button
+            type="button"
+            onClick={handleAiAssist}
+            disabled={aiLoading || (!title && !body)}
+            style={{
+              width: '100%', padding: '10px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700,
+              cursor: aiLoading || (!title && !body) ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+              border: `1px solid ${aiDone ? 'rgba(52,211,153,0.4)' : 'rgba(255,255,255,0.12)'}`,
+              background: aiDone ? 'rgba(52,211,153,0.08)' : 'rgba(255,255,255,0.04)',
+              color: aiDone ? '#34D399' : aiLoading || (!title && !body) ? '#444' : '#A0A0A0',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: '120ms',
+            }}
+          >
+            {aiLoading ? (
+              <>
+                <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                AIが整えています...
+              </>
+            ) : aiDone ? '✅ 整えました！' : '✨ AIで読みやすく整える'}
+          </button>
         </div>
 
         {/* クイックタグ */}

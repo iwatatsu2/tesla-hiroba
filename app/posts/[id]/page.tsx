@@ -40,6 +40,7 @@ export default function PostPage() {
   const [liked, setLiked] = useState(false)
   const [saved, setSaved] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [similar, setSimilar] = useState<{id:string;title:string;category:string}[]>([])
 
   useEffect(() => {
     async function load() {
@@ -47,6 +48,13 @@ export default function PostPage() {
       setPost(p)
       const { data: c } = await supabase.from('comments').select('*').eq('post_id', id).order('created_at')
       setComments(c || [])
+      if (p) {
+        fetch('/api/similar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postId: p.id, title: p.title, body: p.body }),
+        }).then(r => r.json()).then(d => setSimilar(d.similar || []))
+      }
     }
     load()
     const likedIds: string[] = JSON.parse(localStorage.getItem('liked_posts') || '[]')
@@ -148,6 +156,28 @@ export default function PostPage() {
         {post.likes > 0 && (
           <div style={{ padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 14, color: '#888' }}>
             <span style={{ fontWeight: 700, color: '#F0F0F0' }}>{post.likes}</span> いいね
+          </div>
+        )}
+
+        {/* 類似投稿 */}
+        {similar.length > 0 && (
+          <div style={{ padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <p style={{ fontSize: 11, color: '#555', letterSpacing: '0.08em', marginBottom: 10 }}>✨ AIが選ぶ関連投稿</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {similar.map(s => (
+                <a key={s.id} href={`/posts/${s.id}`} style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                  borderRadius: 8, background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)', textDecoration: 'none', transition: '120ms',
+                }}>
+                  <span style={{ fontSize: 12, color: CATEGORY_COLOR[s.category as keyof typeof CATEGORY_COLOR] || '#888', background: (CATEGORY_COLOR[s.category as keyof typeof CATEGORY_COLOR] || '#888') + '18', padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', fontWeight: 600 }}>
+                    {CATEGORY_JP[s.category as keyof typeof CATEGORY_JP] || s.category}
+                  </span>
+                  <span style={{ fontSize: 13, color: '#A0A0A0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{s.title}</span>
+                  <span style={{ color: '#444', fontSize: 12 }}>→</span>
+                </a>
+              ))}
+            </div>
           </div>
         )}
 
