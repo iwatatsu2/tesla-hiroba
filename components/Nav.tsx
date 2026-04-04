@@ -69,23 +69,6 @@ export default function Nav() {
             <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
           </svg>
         </Link>
-        <Link href="/new" style={{
-          fontFamily: "'Press Start 2P', monospace",
-          padding: '6px 12px', fontSize: 8,
-          background: '#C0C0C0', color: '#000',
-          border: '2px solid #C0C0C0',
-          textDecoration: 'none', whiteSpace: 'nowrap',
-          transition: '120ms',
-        }}
-          onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
-            e.currentTarget.style.background = '#00FFFF'
-            e.currentTarget.style.borderColor = '#00FFFF'
-          }}
-          onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
-            e.currentTarget.style.background = '#C0C0C0'
-            e.currentTarget.style.borderColor = '#C0C0C0'
-          }}
-        >POST</Link>
       </div>
     </nav>
   )
