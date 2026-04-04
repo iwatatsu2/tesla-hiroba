@@ -55,13 +55,15 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
       </div>
 
       {/* XPバー */}
-      <div style={{ position: 'relative', height: 14, background: '#1A1A1A', border: `1px solid ${neonColor}40` }}>
+      <div style={{ position: 'relative', height: 14, background: '#1A1A1A', border: `1px solid ${neonColor}40`, overflow: 'visible' }}>
         <div style={{
           height: '100%',
           width: `${displayXp}%`,
           background: neonColor,
           transition: 'width 0.5s ease',
           boxShadow: `0 0 8px ${neonColor}60`,
+          position: 'relative',
+          zIndex: 1,
         }} />
         {/* 車アイコン */}
         <img
@@ -72,9 +74,9 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
             top: '50%',
             left: `clamp(0px, calc(${displayXp}% - 16px), calc(100% - 20px))`,
             transform: 'translateY(-50%)',
-            height: 20,
+            height: 28,
             imageRendering: 'pixelated',
-            mixBlendMode: 'screen',
+            zIndex: 2,
             transition: 'left 0.5s ease',
           }}
         />
