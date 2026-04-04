@@ -54,33 +54,33 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
         </span>
       </div>
 
-      {/* XPバー */}
-      <div style={{ position: 'relative', height: 14, background: '#1A1A1A', border: `1px solid ${neonColor}40`, overflow: 'visible' }}>
-        <div style={{
-          height: '100%',
-          width: `${displayXp}%`,
-          background: neonColor,
-          transition: 'width 0.5s ease',
-          boxShadow: `0 0 8px ${neonColor}60`,
-          position: 'relative',
-          zIndex: 1,
-        }} />
-        {/* 車アイコン */}
+      {/* XPバー + 車（ラッパー） */}
+      <div style={{ position: 'relative', paddingTop: 24 }}>
+        {/* 車アイコン（バーの上に浮かせる） */}
         <img
           src={illust}
           alt=""
           style={{
             position: 'absolute',
-            top: '50%',
-            left: `clamp(0px, calc(${displayXp}% - 16px), calc(100% - 20px))`,
-            transform: 'translateY(-50%)',
-            height: 28,
+            bottom: 0,
+            left: `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 40px))`,
+            height: 36,
             imageRendering: 'pixelated',
-            zIndex: 2,
             mixBlendMode: 'screen',
+            zIndex: 2,
             transition: 'left 0.5s ease',
           }}
         />
+        {/* XPバー */}
+        <div style={{ position: 'relative', height: 14, background: '#1A1A1A', border: `1px solid ${neonColor}40` }}>
+          <div style={{
+            height: '100%',
+            width: `${displayXp}%`,
+            background: neonColor,
+            transition: 'width 0.5s ease',
+            boxShadow: `0 0 8px ${neonColor}60`,
+          }} />
+        </div>
       </div>
 
       {/* ステージラベル */}
