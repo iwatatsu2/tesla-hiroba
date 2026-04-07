@@ -67,6 +67,50 @@ export default function NewsPage() {
       <p style={{ fontSize: 10, letterSpacing: '0.2em', color: '#A0A0A0', marginBottom: 10, fontWeight: 600 }}>LATEST NEWS</p>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 28 }}>テスラ 最新ニュース</h1>
 
+      {/* 編集部ピックアップ */}
+      <div style={{ marginBottom: 36 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.15em', color: '#00FFFF', background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.3)', padding: '3px 10px', borderRadius: 4 }}>EDITOR'S PICK</span>
+          <span style={{ fontSize: 11, color: '#555' }}>編集部ピックアップ</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {[
+            {
+              tag: '🚗 新発売',
+              date: '2026年4月3日',
+              title: 'Model YL、日本で正式発売開始',
+              body: 'テスラ初の3列シート大型SUV「Model YL」が日本で正式販売スタート。8人乗り・全長4,999mmのロングホイールベースモデル。詳細はTesla公式サイトへ。',
+              link: 'https://www.tesla.com/ja_jp/modely',
+            },
+            {
+              tag: '📋 スペック',
+              date: '2026年4月3日',
+              title: 'Model YL スペック概要',
+              body: '最大8人乗り・3列シート／デュアルモーターAWD搭載モデルあり／テスラ初のロングホイールベースSUV。航続距離・価格は公式サイトで確認を。',
+              link: 'https://www.tesla.com/ja_jp/modely',
+            },
+            {
+              tag: '📸 投稿募集',
+              date: '',
+              title: 'Model YL オーナー・注文済みの方は投稿を！',
+              body: '日本上陸したばかりのModel YL。納車レポート・試乗インプレ・内装写真など、あなたの体験をTSLA PARKにシェアしてください。',
+              link: '/new',
+            },
+          ].map((item, i) => (
+            <a key={i} href={item.link} target={item.link.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer"
+              style={{ display: 'block', padding: '14px 16px', borderRadius: 10, border: '1px solid rgba(0,255,255,0.2)', background: 'rgba(0,255,255,0.04)', textDecoration: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 10, color: '#00FFFF', fontWeight: 700 }}>{item.tag}</span>
+                {item.date && <span style={{ fontSize: 10, color: '#555' }}>{item.date}</span>}
+              </div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: '#F0F0F0', margin: '0 0 5px', lineHeight: 1.5 }}>{item.title}</p>
+              <p style={{ fontSize: 12, color: '#888', margin: 0, lineHeight: 1.6 }}>{item.body}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: 28 }} />
+
       {loading && <div style={{ padding: '60px 0', textAlign: 'center', color: '#444', fontSize: 13 }}>読み込み中...</div>}
       {!loading && news.length === 0 && <p style={{ color: '#555', fontSize: 14 }}>ニュースを取得できませんでした</p>}
 
