@@ -205,6 +205,31 @@ export default function PostsSection() {
         {q && <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: '#404040', marginTop: 8 }}>// {posts.length} RESULTS FOR "{q}"</p>}
       </div>
 
+      {/* Editor's Pick */}
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: '16px 20px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#00FFFF', background: 'rgba(0,255,255,0.1)', border: '1px solid rgba(0,255,255,0.3)', padding: '3px 8px' }}>EDITOR'S PICK</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+          {[
+            { tag: '🚗 新発売', date: '2026.04.03', title: 'Model YL、日本で正式発売開始', body: 'テスラ初の3列シート大型SUV「Model YL」が日本で正式販売スタート。8人乗り・全長4,999mm。詳細はTesla公式サイトへ。', link: 'https://www.tesla.com/ja_jp/modely' },
+            { tag: '📋 スペック', date: '2026.04.03', title: 'Model YL スペック概要', body: '最大8人乗り・3列シート／デュアルモーターAWD搭載モデルあり／テスラ初のロングホイールベースSUV。', link: 'https://www.tesla.com/ja_jp/modely' },
+            { tag: '📸 投稿募集', date: '', title: 'Model YL オーナー・注文済みの方は投稿を！', body: '日本上陸したばかりのModel YL。納車レポート・試乗インプレ・内装写真などTSLA PARKにシェアしてください。', link: '/new' },
+          ].map((item, i) => (
+            <a key={i} href={item.link} target={item.link.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer"
+              style={{ display: 'block', padding: '12px 14px', border: '1px solid rgba(0,255,255,0.25)', background: 'rgba(0,255,255,0.04)', textDecoration: 'none', borderRadius: 2 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                <span style={{ fontSize: 10, color: '#00FFFF', fontWeight: 700 }}>{item.tag}</span>
+                {item.date && <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#444' }}>{item.date}</span>}
+              </div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#E0E0E0', margin: '0 0 4px', lineHeight: 1.5 }}>{item.title}</p>
+              <p style={{ fontSize: 11, color: '#666', margin: 0, lineHeight: 1.6 }}>{item.body}</p>
+            </a>
+          ))}
+        </div>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: 4 }} />
+      </div>
+
       {/* Feed */}
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         {!loading && !q && (
