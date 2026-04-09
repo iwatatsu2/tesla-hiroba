@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import XPBar from '@/components/XPBar'
 
-const MODELS = ['Model Y', 'Model 3']
-const MODEL_COLOR: Record<string, string> = { 'Model Y': '#A0A0A0', 'Model 3': '#3B82F6' }
+const MODELS = ['Model Y', 'Model YL', 'Model 3']
+const MODEL_COLOR: Record<string, string> = { 'Model Y': '#A0A0A0', 'Model YL': '#10B981', 'Model 3': '#3B82F6' }
 
 const MILESTONES = [
   { key: 'vin_date', label: 'VIN', color: '#F59E0B' },
