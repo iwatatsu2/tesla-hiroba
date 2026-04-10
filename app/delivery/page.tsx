@@ -311,6 +311,7 @@ export default function DeliveryPage() {
                 docsDate={r.docs_date}
                 deliveryDate={r.delivery_date}
                 model={r.model}
+                color={r.color}
               />
               {r.note && <p style={{ fontSize: 13, color: '#666', lineHeight: 1.7, marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.05)' }}>{r.note}</p>}
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'flex-end' }}>

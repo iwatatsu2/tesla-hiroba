@@ -7,6 +7,7 @@ interface XPBarProps {
   docsDate: string | null
   deliveryDate: string | null
   model: string
+  color?: string | null
 }
 
 const STAGES = [
@@ -17,12 +18,24 @@ const STAGES = [
 ]
 
 const MODEL_ILLUST: Record<string, string> = {
-  'Model Y': '/illust-model-y.png',
-  'Model 3': '/illust-model-3.png',
-  'Model X': '/illust-model-x.png',
+  'Model Y':  '/illust-model-y.png',
+  'Model YL': '/illust-model-yl.png',
+  'Model 3':  '/illust-model-3.png',
+  'Model X':  '/illust-model-x.png',
 }
 
-export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, model }: XPBarProps) {
+// カラー名 → CSS filter（グレーのピクセルアートに色を重ねる）
+const COLOR_FILTER: Record<string, string> = {
+  'ステルスグレー':     'none',
+  'ダイヤモンドブラック': 'brightness(0.35) contrast(1.2)',
+  'グレイシャーブルー':  'hue-rotate(190deg) saturate(2.5) brightness(1.1)',
+  'パールホワイト':     'brightness(2.8) saturate(0.15)',
+  'クイックシルバー':   'brightness(1.7) saturate(0.2)',
+  'ウルトラレッド':    'hue-rotate(310deg) saturate(4) brightness(1.1)',
+  'マリンブルー':      'hue-rotate(210deg) saturate(3) brightness(0.9)',
+}
+
+export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, model, color }: XPBarProps) {
   const xp =
     deliveryDate ? 100 :
     docsDate ? 70 :
@@ -37,6 +50,7 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
   }, [xp])
 
   const illust = MODEL_ILLUST[model] || '/illust-model-3.png'
+  const colorFilter = (color && COLOR_FILTER[color]) ? COLOR_FILTER[color] : 'none'
   const level = xp === 100 ? 'MAX' : xp >= 70 ? '3' : xp >= 40 ? '2' : '1'
   const neonColor = xp === 100 ? '#39FF14' : xp >= 70 ? '#00FFFF' : xp >= 40 ? '#FF00FF' : '#C0C0C0'
 
@@ -56,10 +70,10 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
 
       {/* XPバー + 車（ラッパー） */}
       <div style={{ position: 'relative', paddingTop: 44 }}>
-        {/* 車アイコン（バーの上に浮かせる） */}
+        {/* 車イラスト（バーの上に隙間を空けて配置） */}
         <img
           src={illust}
-          alt=""
+          alt={model}
           style={{
             position: 'absolute',
             bottom: 18,
@@ -67,8 +81,9 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
             height: 36,
             imageRendering: 'pixelated',
             mixBlendMode: 'screen',
+            filter: colorFilter,
             zIndex: 2,
-            transition: 'left 0.5s ease',
+            transition: 'left 0.5s ease, filter 0.3s ease',
           }}
         />
         {/* XPバー */}
