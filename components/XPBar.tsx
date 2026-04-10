@@ -55,14 +55,14 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
       </div>
 
       {/* XPバー + 車（ラッパー） */}
-      <div style={{ position: 'relative', paddingTop: 24 }}>
+      <div style={{ position: 'relative', paddingTop: 44 }}>
         {/* 車アイコン（バーの上に浮かせる） */}
         <img
           src={illust}
           alt=""
           style={{
             position: 'absolute',
-            bottom: 0,
+            bottom: 18,
             left: `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 40px))`,
             height: 36,
             imageRendering: 'pixelated',
