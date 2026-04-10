@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface XPBarProps {
   orderDate: string | null
@@ -24,15 +24,108 @@ const MODEL_ILLUST: Record<string, string> = {
   'Model X':  '/illust-model-x.png',
 }
 
-// カラー名 → CSS filter（グレーのピクセルアートに色を重ねる）
-const COLOR_FILTER: Record<string, string> = {
-  'ステルスグレー':     'none',
-  'ダイヤモンドブラック': 'brightness(0.35) contrast(1.2)',
-  'グレイシャーブルー':  'sepia(1) hue-rotate(155deg) saturate(2.2) brightness(1.3)',
-  'パールホワイト':     'brightness(2.8) saturate(0.15)',
-  'クイックシルバー':   'brightness(1.7) saturate(0.2)',
-  'ウルトラレッド':    'hue-rotate(310deg) saturate(4) brightness(1.1)',
-  'マリンブルー':      'hue-rotate(210deg) saturate(3) brightness(0.9)',
+// カラー名 → [R, G, B] の色相（車体の灰色ピクセルをこの色に寄せる）
+const COLOR_TINT: Record<string, [number, number, number] | null> = {
+  'ステルスグレー':      null,              // 変換なし
+  'ダイヤモンドブラック': [20, 20, 25],      // 暗くする（全体）
+  'グレイシャーブルー':  [130, 185, 215],   // 空色
+  'パールホワイト':      [240, 240, 245],   // 白
+  'クイックシルバー':    [195, 200, 205],   // 明るいシルバー
+  'ウルトラレッド':      [200, 40, 40],     // 赤
+  'マリンブルー':        [30, 70, 140],     // 紺
+}
+
+// 輝度50未満 = ホイール・タイヤ・影 → 変換しない
+// 輝度50〜220 = 車体グレー → 色変換
+// 輝度220超 = ハイライト → 変換しない
+function applyBodyTint(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  tint: [number, number, number] | null
+) {
+  const W = img.naturalWidth
+  const H = img.naturalHeight
+  ctx.clearRect(0, 0, W, H)
+  ctx.drawImage(img, 0, 0)
+
+  if (!tint) return  // ステルスグレーはそのまま
+
+  const imageData = ctx.getImageData(0, 0, W, H)
+  const data = imageData.data
+  const [tr, tg, tb] = tint
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3]
+    if (a < 10) continue  // 透明ピクセルはスキップ
+
+    const brightness = (r + g + b) / 3
+
+    // 暗いピクセル（ホイール・タイヤ・影）: 輝度60未満 → 手をつけない
+    if (brightness < 60) continue
+
+    // ハイライト（ヘッドライト等）: 輝度220超 → 手をつけない
+    if (brightness > 220) continue
+
+    // 車体部分: 元の輝度を保ちながらターゲット色に寄せる
+    const t = 0.65  // 色変換強度（0=元色、1=完全変換）
+    const ratio = brightness / 128  // 元の明るさ比
+    data[i]   = Math.round(r * (1-t) + tr * ratio * t)
+    data[i+1] = Math.round(g * (1-t) + tg * ratio * t)
+    data[i+2] = Math.round(b * (1-t) + tb * ratio * t)
+  }
+
+  ctx.putImageData(imageData, 0, 0)
+}
+
+interface CarCanvasProps {
+  src: string
+  color: string | null | undefined
+  height: number
+  left: string
+  transition: string
+}
+
+function CarCanvas({ src, color, height, left, transition }: CarCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [naturalSize, setNaturalSize] = useState({ w: 400, h: 200 })
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight })
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const tint = (color && COLOR_TINT[color] !== undefined) ? COLOR_TINT[color] : null
+      applyBodyTint(ctx, img, tint)
+    }
+    img.src = src
+  }, [src, color])
+
+  const aspect = naturalSize.w / naturalSize.h
+  const displayH = height
+  const displayW = Math.round(displayH * aspect)
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'absolute',
+        bottom: 18,
+        left,
+        height: displayH,
+        width: displayW,
+        imageRendering: 'pixelated',
+        transition,
+        zIndex: 2,
+      }}
+    />
+  )
 }
 
 export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, model, color }: XPBarProps) {
@@ -50,43 +143,27 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
   }, [xp])
 
   const illust = MODEL_ILLUST[model] || '/illust-model-3.png'
-  const colorFilter = (color && COLOR_FILTER[color]) ? COLOR_FILTER[color] : 'none'
   const level = xp === 100 ? 'MAX' : xp >= 70 ? '3' : xp >= 40 ? '2' : '1'
   const neonColor = xp === 100 ? '#39FF14' : xp >= 70 ? '#00FFFF' : xp >= 40 ? '#FF00FF' : '#C0C0C0'
 
   return (
     <div style={{ marginTop: 12, padding: '10px 0 0' }}>
-      <style>{`
-        @keyframes xpGrow { from { width: 0% } }
-      `}</style>
+      <style>{`@keyframes xpGrow { from { width: 0% } }`}</style>
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#404040' }}>
-          LVL {level}
-        </span>
-        <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: neonColor }}>
-          {xp} XP
-        </span>
+        <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#404040' }}>LVL {level}</span>
+        <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: neonColor }}>{xp} XP</span>
       </div>
 
-      {/* XPバー + 車（ラッパー） */}
+      {/* XPバー + 車 */}
       <div style={{ position: 'relative', paddingTop: 44 }}>
-        {/* 車イラスト（バーの上に隙間を空けて配置） */}
-        <img
+        <CarCanvas
           src={illust}
-          alt={model}
-          style={{
-            position: 'absolute',
-            bottom: 18,
-            left: `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 40px))`,
-            height: 36,
-            imageRendering: 'pixelated',
-            mixBlendMode: 'screen',
-            filter: colorFilter,
-            zIndex: 2,
-            transition: 'left 0.5s ease, filter 0.3s ease',
-          }}
+          color={color}
+          height={36}
+          left={`clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`}
+          transition="left 0.5s ease"
         />
-        {/* XPバー */}
         <div style={{ position: 'relative', height: 14, background: '#1A1A1A', border: `1px solid ${neonColor}40` }}>
           <div style={{
             height: '100%',
@@ -100,17 +177,14 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
 
       {/* ステージラベル */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-        {STAGES.map(s => {
-          const done = xp >= s.xp
-          return (
-            <span key={s.key} style={{
-              fontFamily: "'Press Start 2P', monospace", fontSize: 6,
-              color: done ? neonColor : '#2A2A2A',
-            }}>
-              {s.label}
-            </span>
-          )
-        })}
+        {STAGES.map(s => (
+          <span key={s.key} style={{
+            fontFamily: "'Press Start 2P', monospace", fontSize: 6,
+            color: xp >= s.xp ? neonColor : '#2A2A2A',
+          }}>
+            {s.label}
+          </span>
+        ))}
       </div>
     </div>
   )
