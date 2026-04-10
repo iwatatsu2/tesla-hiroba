@@ -28,7 +28,7 @@ const MODEL_ILLUST: Record<string, string> = {
 const COLOR_FILTER: Record<string, string> = {
   'ステルスグレー':     'none',
   'ダイヤモンドブラック': 'brightness(0.35) contrast(1.2)',
-  'グレイシャーブルー':  'hue-rotate(190deg) saturate(2.5) brightness(1.1)',
+  'グレイシャーブルー':  'hue-rotate(175deg) saturate(1.8) brightness(1.6)',
   'パールホワイト':     'brightness(2.8) saturate(0.15)',
   'クイックシルバー':   'brightness(1.7) saturate(0.2)',
   'ウルトラレッド':    'hue-rotate(310deg) saturate(4) brightness(1.1)',
