@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const MENU = [
-  { href: '/', label: 'FEED', match: (p: string) => p === '/' || p.startsWith('/posts') || p.startsWith('/new') },
-  { href: '/delivery', label: 'DELIVERY', match: (p: string) => p.startsWith('/delivery') },
+  { href: '/', label: 'DELIVERY', match: (p: string) => p === '/' || p.startsWith('/delivery') },
+  { href: '/feed', label: 'FEED', match: (p: string) => p.startsWith('/feed') || p.startsWith('/posts') || p.startsWith('/new') },
   { href: '/map', label: 'CHARGE', match: (p: string) => p.startsWith('/map') || p.startsWith('/spots') },
   { href: '/news', label: 'NEWS', match: (p: string) => p.startsWith('/news') },
   { href: '/videos', label: 'VIDEO', match: (p: string) => p.startsWith('/videos') },
