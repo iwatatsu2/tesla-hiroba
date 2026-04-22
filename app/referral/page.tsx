@@ -165,7 +165,7 @@ export default function ReferralPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {[
               { step: '01', text: '会員登録してプロフィールにTesla紹介コードを入力' },
-              { step: '02', text: '投稿・いいね獲得・コメントでスコアが上がる' },
+              { step: '02', text: '納車レポート投稿・コメントでスコアが上がる' },
               { step: '03', text: 'ランキング上位者の紹介コードが自動掲載（1時間ごと更新）' },
               { step: '04', text: 'コードが使用されたら24時間クールダウン→次点へ切替' },
             ].map(({ step, text }) => (
@@ -182,8 +182,7 @@ export default function ReferralPage() {
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: '#404040', marginBottom: 16 }}>// SCORE SYSTEM</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
-              { action: '投稿1件', pts: '+2 pts' },
-              { action: 'いいね1件受取', pts: '+3 pts' },
+              { action: '納車レポート投稿', pts: '+2 pts' },
               { action: 'コメント1件', pts: '+1 pt' },
             ].map(({ action, pts }) => (
               <div key={action} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -273,7 +272,7 @@ export default function ReferralPage() {
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: '#404040', marginBottom: 12 }}>// JOIN THE RANKING</p>
           <p style={{ fontSize: 12, color: '#606060', marginBottom: 16, lineHeight: 1.8 }}>
             プロフィールに紹介コードを登録するだけで参加できます。<br />
-            フォーラムで活動してスコアを積み上げよう。
+            納車レポートやコメントでスコアを積み上げよう。
           </p>
           <a href="/profile" style={{
             display: 'inline-block',

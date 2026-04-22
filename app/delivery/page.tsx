@@ -6,6 +6,19 @@ import { useRouter } from 'next/navigation'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import XPBar from '@/components/XPBar'
 
+interface FeaturedCode {
+  id: string
+  display_name: string
+  referral_code: string
+  score: number
+}
+
+const TESLA_REFERRAL_BASE = 'https://www.tesla.com/referral/'
+function buildReferralUrl(code: string): string {
+  if (code.startsWith('http')) return code
+  return TESLA_REFERRAL_BASE + code
+}
+
 const MODELS = ['Model Y', 'Model YL', 'Model 3']
 const MODEL_COLOR: Record<string, string> = { 'Model Y': '#A0A0A0', 'Model YL': '#10B981', 'Model 3': '#3B82F6' }
 
@@ -172,14 +185,38 @@ export default function DeliveryPage() {
   const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [myNickname, setMyNickname] = useState('')
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
+  const [featured, setFeatured] = useState<FeaturedCode | null>(null)
+  const [referralClicked, setReferralClicked] = useState(false)
 
   useEffect(() => {
     setMyNickname(localStorage.getItem('delivery_nickname') || '')
     supabase.from('delivery_reports').select('*').order('order_date', { ascending: true }).then(({ data }) => {
       setReports(data || [])
       setLoading(false)
+      // コメント数を取得
+      if (data && data.length > 0) {
+        supabase.from('delivery_comments').select('report_id').then(({ data: comments }) => {
+          const counts: Record<string, number> = {}
+          comments?.forEach(c => { counts[c.report_id] = (counts[c.report_id] || 0) + 1 })
+          setCommentCounts(counts)
+        })
+      }
     })
+    // 紹介コード取得
+    fetch('/api/referral').then(r => r.json()).then(d => setFeatured(d.featured))
   }, [])
+
+  const handleReferralClick = async () => {
+    if (!featured || referralClicked) return
+    fetch('/api/referral', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referral_code: featured.referral_code }),
+    })
+    setReferralClicked(true)
+    window.open(buildReferralUrl(featured.referral_code), '_blank', 'noopener,noreferrer')
+  }
 
   const summary = MODELS.map(model => {
     const completed = reports.filter(r => r.model === model && r.order_date && r.delivery_date)
@@ -215,6 +252,31 @@ export default function DeliveryPage() {
           ＋ 進捗を報告
         </Link>
       </div>
+
+      {/* 紹介コード */}
+      {featured && (
+        <div style={{ ...card, marginBottom: 24, border: '1px solid rgba(0,255,255,0.2)', background: 'rgba(0,255,255,0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#00FFFF', marginBottom: 6 }}>REFERRAL CODE</p>
+              <p style={{ fontSize: 12, color: '#888' }}>これから注文する方はこちらの紹介リンクをご利用ください</p>
+            </div>
+            <button onClick={handleReferralClick} disabled={referralClicked}
+              style={{
+                fontFamily: "'Press Start 2P', monospace", fontSize: 8, padding: '10px 18px',
+                background: referralClicked ? '#1A1A1A' : '#00FFFF', color: referralClicked ? '#404040' : '#000',
+                border: `1px solid ${referralClicked ? '#2A2A2A' : '#00FFFF'}`,
+                cursor: referralClicked ? 'default' : 'pointer', whiteSpace: 'nowrap',
+              }}>
+              {referralClicked ? 'OPENED!' : '> 紹介リンクで注文'}
+            </button>
+          </div>
+          <p style={{ fontSize: 11, color: '#FF6B35', marginTop: 10 }}>⚠ 注文確定前にこのボタンからTesla公式サイトを開いてください</p>
+          <Link href="/referral" style={{ fontSize: 11, color: '#555', marginTop: 6, display: 'inline-block', textDecoration: 'none' }}>
+            ランキング詳細を見る →
+          </Link>
+        </div>
+      )}
 
       {/* サマリーカード */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 36 }}>
@@ -269,8 +331,9 @@ export default function DeliveryPage() {
           const isComplete = !!r.delivery_date
           const color = MODEL_COLOR[r.model] || '#888'
           const isMyPost = myNickname && r.author_name === myNickname
+          const cc = commentCounts[r.id] || 0
           return (
-            <div key={r.id} style={{ ...card, border: isMyPost ? '1px solid rgba(255,255,255,0.25)' : card.border }}>
+            <div key={r.id} onClick={() => router.push(`/delivery/${r.id}`)} style={{ ...card, border: isMyPost ? '1px solid rgba(255,255,255,0.25)' : card.border, cursor: 'pointer', transition: '120ms' }}>
               {isMyPost && (
                 <div style={{ fontSize: 10, color: '#A0A0A0', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 8 }}>👤 あなたの投稿</div>
               )}
@@ -314,8 +377,13 @@ export default function DeliveryPage() {
                 color={r.color}
               />
               {r.note && <p style={{ fontSize: 13, color: '#666', lineHeight: 1.7, marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.05)' }}>{r.note}</p>}
-              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'flex-end' }}>
-                <button onClick={() => router.push(`/delivery/edit?id=${r.id}`)}
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {cc > 0 ? (
+                  <span style={{ fontSize: 12, color: '#666' }}>💬 {cc}</span>
+                ) : (
+                  <span style={{ fontSize: 12, color: '#444' }}>💬 コメントする</span>
+                )}
+                <button onClick={(e) => { e.stopPropagation(); router.push(`/delivery/edit?id=${r.id}`) }}
                   style={{ padding: '5px 14px', fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
                   ✏️ 修正する
                 </button>

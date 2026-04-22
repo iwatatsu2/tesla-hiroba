@@ -99,6 +99,14 @@ export interface SpotReview {
   created_at: string
 }
 
+export interface DeliveryComment {
+  id: string
+  report_id: string
+  body: string
+  author_name: string | null
+  created_at: string
+}
+
 export interface SpotPhoto {
   id: string
   spot_id: string
