@@ -186,6 +186,8 @@ export default function DeliveryPage() {
   const [loading, setLoading] = useState(true)
   const [myNickname, setMyNickname] = useState('')
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
+  const [myLikes, setMyLikes] = useState<Set<string>>(new Set())
   const [featured, setFeatured] = useState<FeaturedCode | null>(null)
   const [referralClicked, setReferralClicked] = useState(false)
 
@@ -200,6 +202,18 @@ export default function DeliveryPage() {
           const counts: Record<string, number> = {}
           comments?.forEach(c => { counts[c.report_id] = (counts[c.report_id] || 0) + 1 })
           setCommentCounts(counts)
+        })
+        // いいね数を取得
+        supabase.from('delivery_likes').select('report_id, liker_name').then(({ data: likes }) => {
+          const counts: Record<string, number> = {}
+          const nick = localStorage.getItem('delivery_nickname') || ''
+          const liked = new Set<string>()
+          likes?.forEach(l => {
+            counts[l.report_id] = (counts[l.report_id] || 0) + 1
+            if (nick && l.liker_name === nick) liked.add(l.report_id)
+          })
+          setLikeCounts(counts)
+          setMyLikes(liked)
         })
       }
     })
@@ -216,6 +230,26 @@ export default function DeliveryPage() {
     })
     setReferralClicked(true)
     window.open(buildReferralUrl(featured.referral_code), '_blank', 'noopener,noreferrer')
+  }
+
+  const handleLike = async (e: React.MouseEvent, reportId: string) => {
+    e.stopPropagation()
+    const nick = myNickname || localStorage.getItem('delivery_nickname') || ''
+    if (!nick) {
+      alert('いいねするにはニックネームが必要です。レポート詳細画面のコメント欄でニックネームを設定してください。')
+      return
+    }
+    if (myLikes.has(reportId)) {
+      // いいね解除
+      await supabase.from('delivery_likes').delete().eq('report_id', reportId).eq('liker_name', nick)
+      setMyLikes(prev => { const s = new Set(prev); s.delete(reportId); return s })
+      setLikeCounts(prev => ({ ...prev, [reportId]: (prev[reportId] || 1) - 1 }))
+    } else {
+      // いいね
+      await supabase.from('delivery_likes').insert({ report_id: reportId, liker_name: nick })
+      setMyLikes(prev => new Set(prev).add(reportId))
+      setLikeCounts(prev => ({ ...prev, [reportId]: (prev[reportId] || 0) + 1 }))
+    }
   }
 
   const summary = MODELS.map(model => {
@@ -259,6 +293,7 @@ export default function DeliveryPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div>
               <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#00FFFF', marginBottom: 6 }}>REFERRAL CODE</p>
+              <p style={{ fontSize: 14, color: '#00FFFF', fontWeight: 700, marginBottom: 4 }}>{featured.display_name || 'OWNER'} <span style={{ fontSize: 12, color: '#888', fontWeight: 400 }}>さんの紹介コード</span></p>
               <p style={{ fontSize: 12, color: '#888' }}>これから注文する方はこちらの紹介リンクをご利用ください</p>
             </div>
             <button onClick={handleReferralClick} disabled={referralClicked}
@@ -378,11 +413,17 @@ export default function DeliveryPage() {
               />
               {r.note && <p style={{ fontSize: 13, color: '#666', lineHeight: 1.7, marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.05)' }}>{r.note}</p>}
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                {cc > 0 ? (
-                  <span style={{ fontSize: 12, color: '#666' }}>💬 {cc}</span>
-                ) : (
-                  <span style={{ fontSize: 12, color: '#444' }}>💬 コメントする</span>
-                )}
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                  <button onClick={(e) => handleLike(e, r.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: myLikes.has(r.id) ? '#EF4444' : '#444', fontFamily: 'inherit', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 4, transition: '150ms' }}>
+                    {myLikes.has(r.id) ? '❤️' : '🤍'} {(likeCounts[r.id] || 0) > 0 ? likeCounts[r.id] : ''}
+                  </button>
+                  {cc > 0 ? (
+                    <span style={{ fontSize: 12, color: '#666' }}>💬 {cc}</span>
+                  ) : (
+                    <span style={{ fontSize: 12, color: '#444' }}>💬 コメントする</span>
+                  )}
+                </div>
                 <button onClick={(e) => { e.stopPropagation(); router.push(`/delivery/edit?id=${r.id}`) }}
                   style={{ padding: '5px 14px', fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
                   ✏️ 修正する

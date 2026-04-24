@@ -126,7 +126,16 @@ export default function ReferralPage() {
             <div style={{ position: 'absolute', top: -10, left: 16, background: '#0A0A0A', padding: '0 8px' }}>
               <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#00FFFF' }}>NOW FEATURED</span>
             </div>
-            <p style={{ fontSize: 12, color: '#606060', marginBottom: 20 }}>現在掲載中の紹介コードです。以下のボタンから注文してください。</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #00FFFF, #0088AA)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#000', flexShrink: 0 }}>
+                {(data.featured.display_name || '?')[0]?.toUpperCase()}
+              </div>
+              <div>
+                <p style={{ fontSize: 18, fontWeight: 700, color: '#00FFFF', lineHeight: 1.2 }}>{data.featured.display_name || 'OWNER'}</p>
+                <p style={{ fontSize: 11, color: '#505050', marginTop: 2 }}>さんの紹介コードで注文できます</p>
+              </div>
+            </div>
+            <p style={{ fontSize: 12, color: '#606060', marginBottom: 20 }}>以下のボタンから注文してください。</p>
 
             <div style={{ marginBottom: 16, padding: '10px 12px', background: 'rgba(255,107,53,0.08)', border: '1px solid rgba(255,107,53,0.2)' }}>
               <p style={{ fontSize: 11, color: '#FF6B35', lineHeight: 1.8, margin: 0 }}>
@@ -183,6 +192,7 @@ export default function ReferralPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
               { action: '納車レポート投稿', pts: '+2 pts' },
+              { action: 'いいね（もらう）', pts: '+1 pt' },
               { action: 'コメント1件', pts: '+1 pt' },
             ].map(({ action, pts }) => (
               <div key={action} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

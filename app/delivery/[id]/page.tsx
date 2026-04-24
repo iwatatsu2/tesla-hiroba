@@ -57,6 +57,8 @@ export default function DeliveryDetailPage() {
     typeof window !== 'undefined' ? localStorage.getItem('delivery_nickname') || '' : ''
   )
   const [submitting, setSubmitting] = useState(false)
+  const [likeCount, setLikeCount] = useState(0)
+  const [liked, setLiked] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -64,6 +66,11 @@ export default function DeliveryDetailPage() {
       setReport(r)
       const { data: c } = await supabase.from('delivery_comments').select('*').eq('report_id', id).order('created_at')
       setComments(c || [])
+      // いいね取得
+      const { data: likes } = await supabase.from('delivery_likes').select('liker_name').eq('report_id', id)
+      setLikeCount(likes?.length || 0)
+      const nick = localStorage.getItem('delivery_nickname') || ''
+      if (nick && likes?.some(l => l.liker_name === nick)) setLiked(true)
     }
     load()
   }, [id])
@@ -153,7 +160,23 @@ export default function DeliveryDetailPage() {
             <p style={{ fontSize: 13, color: '#A0A0A0', lineHeight: 1.7, marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'pre-wrap' }}>{report.note}</p>
           )}
 
-          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button onClick={async () => {
+              const nick = commentName || localStorage.getItem('delivery_nickname') || ''
+              if (!nick) { alert('いいねするにはニックネームを入力してください'); return }
+              if (liked) {
+                await supabase.from('delivery_likes').delete().eq('report_id', id).eq('liker_name', nick)
+                setLiked(false); setLikeCount(c => c - 1)
+              } else {
+                await supabase.from('delivery_likes').insert({ report_id: id, liker_name: nick })
+                setLiked(true); setLikeCount(c => c + 1)
+              }
+            }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: liked ? '#EF4444' : '#555', fontFamily: 'inherit', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6, transition: '150ms' }}>
+              <span style={{ fontSize: 20 }}>{liked ? '❤️' : '🤍'}</span>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{likeCount > 0 ? likeCount : ''}</span>
+              <span style={{ fontSize: 12, color: '#666' }}>いいね</span>
+            </button>
             <button onClick={() => router.push(`/delivery/edit?id=${report.id}`)}
               style={{ padding: '5px 14px', fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
               ✏️ 修正する
