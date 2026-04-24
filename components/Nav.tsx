@@ -7,6 +7,7 @@ const MENU = [
   { href: '/map', label: 'CHARGE', match: (p: string) => p.startsWith('/map') || p.startsWith('/spots') },
   { href: '/news', label: 'NEWS', match: (p: string) => p.startsWith('/news') },
   { href: '/videos', label: 'VIDEO', match: (p: string) => p.startsWith('/videos') },
+  { href: '/referral', label: 'REFER', match: (p: string) => p.startsWith('/referral') },
 ]
 
 export default function Nav() {
