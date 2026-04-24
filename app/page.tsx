@@ -109,7 +109,7 @@ export default function Home() {
       }}>
         <img src="/illust-optimus.png" alt="" style={{ position: 'absolute', top: 8, left: 8, height: 56, imageRendering: 'pixelated', objectFit: 'contain', mixBlendMode: 'screen' }} />
         <img src="/illust-cybertruck.png" alt="" style={{ position: 'absolute', top: 8, right: 8, height: 56, imageRendering: 'pixelated', objectFit: 'contain', mixBlendMode: 'screen' }} />
-        <img src="/illust-model-3.png" alt="" style={{ position: 'absolute', bottom: 8, left: 8, height: 56, imageRendering: 'pixelated', objectFit: 'contain', mixBlendMode: 'screen' }} />
+        <img src="/illust-model-3-hero.png" alt="" style={{ position: 'absolute', bottom: 8, left: 8, height: 56, imageRendering: 'pixelated', objectFit: 'contain', mixBlendMode: 'screen' }} />
         <img src="/illust-model-x.png" alt="" style={{ position: 'absolute', bottom: 8, right: 8, height: 56, imageRendering: 'pixelated', objectFit: 'contain', mixBlendMode: 'screen' }} />
 
         <div style={{ position: 'relative', zIndex: 2 }}>
