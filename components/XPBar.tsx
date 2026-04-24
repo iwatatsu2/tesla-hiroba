@@ -156,12 +156,12 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
       </div>
 
       {/* XPバー + 車 */}
-      <div style={{ position: 'relative', paddingTop: 44 }}>
+      <div style={{ position: 'relative', paddingTop: 64 }}>
         <CarCanvas
           src={illust}
           color={color}
-          height={36}
-          left={`clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`}
+          height={72}
+          left={`clamp(0px, calc(${displayXp}% - 40px), calc(100% - 120px))`}
           transition="left 0.5s ease"
         />
         <div style={{ position: 'relative', height: 14, background: '#1A1A1A', border: `1px solid ${neonColor}40` }}>
