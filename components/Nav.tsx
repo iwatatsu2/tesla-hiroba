@@ -3,11 +3,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const MENU = [
-  { href: '/', label: 'DELIVERY', match: (p: string) => p === '/' || p.startsWith('/delivery') },
+  { href: '/delivery', label: 'DELIVERY', match: (p: string) => p === '/' || p.startsWith('/delivery') },
   { href: '/map', label: 'CHARGE', match: (p: string) => p.startsWith('/map') || p.startsWith('/spots') },
   { href: '/news', label: 'NEWS', match: (p: string) => p.startsWith('/news') },
   { href: '/videos', label: 'VIDEO', match: (p: string) => p.startsWith('/videos') },
-  { href: '/referral', label: 'REFER', match: (p: string) => p.startsWith('/referral') },
 ]
 
 export default function Nav() {
@@ -48,7 +47,7 @@ export default function Nav() {
         })}
       </div>
 
-      {/* X link + Post button */}
+      {/* X link + Profile */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto', flexShrink: 0 }}>
         <a href="https://x.com/tslapark" target="_blank" rel="noopener noreferrer"
           style={{ display: 'flex', alignItems: 'center', color: '#808080', transition: '150ms' }}

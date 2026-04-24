@@ -6,19 +6,6 @@ import { useRouter } from 'next/navigation'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import XPBar from '@/components/XPBar'
 
-interface FeaturedCode {
-  id: string
-  display_name: string
-  referral_code: string
-  score: number
-}
-
-const TESLA_REFERRAL_BASE = 'https://www.tesla.com/referral/'
-function buildReferralUrl(code: string): string {
-  if (code.startsWith('http')) return code
-  return TESLA_REFERRAL_BASE + code
-}
-
 const MODELS = ['Model Y', 'Model YL', 'Model 3']
 const MODEL_COLOR: Record<string, string> = { 'Model Y': '#A0A0A0', 'Model YL': '#10B981', 'Model 3': '#3B82F6' }
 
@@ -45,7 +32,6 @@ function GanttChart({ reports }: { reports: any[] }) {
   const today = Date.now()
   const todayDate = new Date()
 
-  // 表示範囲：最も古い注文日の1ヶ月前 〜 今日+2ヶ月
   const allOrderMs = reports.map(r => toMs(r.order_date)).filter(Boolean) as number[]
   const startDate = new Date(Math.min(...allOrderMs))
   startDate.setDate(1)
@@ -53,7 +39,6 @@ function GanttChart({ reports }: { reports: any[] }) {
   const endDate = new Date(todayDate)
   endDate.setMonth(endDate.getMonth() + 2)
   endDate.setDate(1)
-  // 納車済みで範囲外のものも含める
   const maxDelivery = Math.max(...reports.map(r => toMs(r.delivery_date) || 0).filter(Boolean))
   if (maxDelivery > endDate.getTime()) {
     const d = new Date(maxDelivery)
@@ -68,7 +53,6 @@ function GanttChart({ reports }: { reports: any[] }) {
   const toX = (ms: number) => Math.max(0, Math.min(100, ((ms - minMs) / rangeMs) * 100))
   const todayX = toX(today)
 
-  // 月ラベル生成（年が変わる月は年も表示）
   const labels: { label: string; x: number }[] = []
   const d = new Date(startDate)
   let prevYear = -1
@@ -106,7 +90,6 @@ function GanttChart({ reports }: { reports: any[] }) {
       </div>
 
       <div style={{ minWidth: 500, display: 'flex' }}>
-        {/* 左ラベル列 */}
         <div style={{ width: 80, flexShrink: 0 }}>
           <div style={{ height: 24 }} />
           {reports.map(r => (
@@ -117,21 +100,16 @@ function GanttChart({ reports }: { reports: any[] }) {
           ))}
         </div>
 
-        {/* 右バー列 */}
         <div style={{ flex: 1, position: 'relative' }}>
-          {/* X軸ラベル */}
           <div style={{ position: 'relative', height: 28 }}>
             {labels.map((l, i) => (
               <span key={i} style={{ position: 'absolute', left: `${l.x}%`, top: 8, fontSize: 9, color: '#555', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>{l.label}</span>
             ))}
-            {/* 今日ラベル（X軸上） */}
             <span style={{ position: 'absolute', left: `${todayX}%`, top: 6, fontSize: 9, fontWeight: 700, color: '#E0E0E0', transform: 'translateX(-50%)', whiteSpace: 'nowrap', background: '#2A2A2A', padding: '1px 5px', borderRadius: 3 }}>TODAY</span>
           </div>
 
-          {/* 今日線 */}
           <div style={{ position: 'absolute', left: `${todayX}%`, top: 28, bottom: 0, width: 2, background: 'rgba(220,220,220,0.4)', zIndex: 1 }} />
 
-          {/* バー行 */}
           {reports.map(r => {
             const orderMs = toMs(r.order_date)
             if (!orderMs) return null
@@ -184,69 +162,54 @@ export default function DeliveryPage() {
   const router = useRouter()
   const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [myNickname, setMyNickname] = useState('')
+  const [user, setUser] = useState<any>(null)
+  const [displayName, setDisplayName] = useState('')
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set())
-  const [featured, setFeatured] = useState<FeaturedCode | null>(null)
-  const [referralClicked, setReferralClicked] = useState(false)
 
   useEffect(() => {
-    setMyNickname(localStorage.getItem('delivery_nickname') || '')
+    // ユーザー情報
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) {
+        setUser(user)
+        const { data: profile } = await supabase.from('profiles').select('display_name').eq('id', user.id).single()
+        if (profile?.display_name) setDisplayName(profile.display_name)
+        // 自分のいいね
+        supabase.from('delivery_likes').select('report_id').eq('user_id', user.id).then(({ data: likes }) => {
+          setMyLikes(new Set(likes?.map(l => l.report_id) || []))
+        })
+      }
+    })
+
     supabase.from('delivery_reports').select('*').order('order_date', { ascending: true }).then(({ data }) => {
       setReports(data || [])
       setLoading(false)
-      // コメント数を取得
       if (data && data.length > 0) {
         supabase.from('delivery_comments').select('report_id').then(({ data: comments }) => {
           const counts: Record<string, number> = {}
           comments?.forEach(c => { counts[c.report_id] = (counts[c.report_id] || 0) + 1 })
           setCommentCounts(counts)
         })
-        // いいね数を取得
-        supabase.from('delivery_likes').select('report_id, liker_name').then(({ data: likes }) => {
+        supabase.from('delivery_likes').select('report_id').then(({ data: likes }) => {
           const counts: Record<string, number> = {}
-          const nick = localStorage.getItem('delivery_nickname') || ''
-          const liked = new Set<string>()
-          likes?.forEach(l => {
-            counts[l.report_id] = (counts[l.report_id] || 0) + 1
-            if (nick && l.liker_name === nick) liked.add(l.report_id)
-          })
+          likes?.forEach(l => { counts[l.report_id] = (counts[l.report_id] || 0) + 1 })
           setLikeCounts(counts)
-          setMyLikes(liked)
         })
       }
     })
-    // 紹介コード取得
-    fetch('/api/referral').then(r => r.json()).then(d => setFeatured(d.featured))
   }, [])
-
-  const handleReferralClick = async () => {
-    if (!featured || referralClicked) return
-    fetch('/api/referral', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referral_code: featured.referral_code }),
-    })
-    setReferralClicked(true)
-    window.open(buildReferralUrl(featured.referral_code), '_blank', 'noopener,noreferrer')
-  }
 
   const handleLike = async (e: React.MouseEvent, reportId: string) => {
     e.stopPropagation()
-    const nick = myNickname || localStorage.getItem('delivery_nickname') || ''
-    if (!nick) {
-      alert('いいねするにはニックネームが必要です。レポート詳細画面のコメント欄でニックネームを設定してください。')
-      return
-    }
+    if (!user) { router.push('/auth'); return }
     if (myLikes.has(reportId)) {
-      // いいね解除
-      await supabase.from('delivery_likes').delete().eq('report_id', reportId).eq('liker_name', nick)
+      await supabase.from('delivery_likes').delete().eq('report_id', reportId).eq('user_id', user.id)
       setMyLikes(prev => { const s = new Set(prev); s.delete(reportId); return s })
       setLikeCounts(prev => ({ ...prev, [reportId]: (prev[reportId] || 1) - 1 }))
     } else {
-      // いいね
-      await supabase.from('delivery_likes').insert({ report_id: reportId, liker_name: nick })
+      const name = displayName || user.email || ''
+      await supabase.from('delivery_likes').insert({ report_id: reportId, user_id: user.id, liker_name: name })
       setMyLikes(prev => new Set(prev).add(reportId))
       setLikeCounts(prev => ({ ...prev, [reportId]: (prev[reportId] || 0) + 1 }))
     }
@@ -286,32 +249,6 @@ export default function DeliveryPage() {
           ＋ 進捗を報告
         </Link>
       </div>
-
-      {/* 紹介コード */}
-      {featured && (
-        <div style={{ ...card, marginBottom: 24, border: '1px solid rgba(0,255,255,0.2)', background: 'rgba(0,255,255,0.03)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#00FFFF', marginBottom: 6 }}>REFERRAL CODE</p>
-              <p style={{ fontSize: 14, color: '#00FFFF', fontWeight: 700, marginBottom: 4 }}>{featured.display_name || 'OWNER'} <span style={{ fontSize: 12, color: '#888', fontWeight: 400 }}>さんの紹介コード</span></p>
-              <p style={{ fontSize: 12, color: '#888' }}>これから注文する方はこちらの紹介リンクをご利用ください</p>
-            </div>
-            <button onClick={handleReferralClick} disabled={referralClicked}
-              style={{
-                fontFamily: "'Press Start 2P', monospace", fontSize: 8, padding: '10px 18px',
-                background: referralClicked ? '#1A1A1A' : '#00FFFF', color: referralClicked ? '#404040' : '#000',
-                border: `1px solid ${referralClicked ? '#2A2A2A' : '#00FFFF'}`,
-                cursor: referralClicked ? 'default' : 'pointer', whiteSpace: 'nowrap',
-              }}>
-              {referralClicked ? 'OPENED!' : '> 紹介リンクで注文'}
-            </button>
-          </div>
-          <p style={{ fontSize: 11, color: '#FF6B35', marginTop: 10 }}>⚠ 注文確定前にこのボタンからTesla公式サイトを開いてください</p>
-          <Link href="/referral" style={{ fontSize: 11, color: '#555', marginTop: 6, display: 'inline-block', textDecoration: 'none' }}>
-            ランキング詳細を見る →
-          </Link>
-        </div>
-      )}
 
       {/* サマリーカード */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 36 }}>
@@ -365,7 +302,7 @@ export default function DeliveryPage() {
           const waitDays = calcDays(r.order_date, r.delivery_date)
           const isComplete = !!r.delivery_date
           const color = MODEL_COLOR[r.model] || '#888'
-          const isMyPost = myNickname && r.author_name === myNickname
+          const isMyPost = user && r.user_id === user.id
           const cc = commentCounts[r.id] || 0
           return (
             <div key={r.id} onClick={() => router.push(`/delivery/${r.id}`)} style={{ ...card, border: isMyPost ? '1px solid rgba(255,255,255,0.25)' : card.border, cursor: 'pointer', transition: '120ms' }}>
@@ -424,10 +361,12 @@ export default function DeliveryPage() {
                     <span style={{ fontSize: 12, color: '#444' }}>💬 コメントする</span>
                   )}
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); router.push(`/delivery/edit?id=${r.id}`) }}
-                  style={{ padding: '5px 14px', fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
-                  ✏️ 修正する
-                </button>
+                {isMyPost && (
+                  <button onClick={(e) => { e.stopPropagation(); router.push(`/delivery/edit?id=${r.id}`) }}
+                    style={{ padding: '5px 14px', fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    ✏️ 修正する
+                  </button>
+                )}
               </div>
             </div>
           )

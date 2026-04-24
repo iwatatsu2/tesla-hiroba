@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -35,24 +35,30 @@ export default function NewDelivery() {
   const [region, setRegion] = useState('')
   const [color, setColor] = useState('')
   const [note, setNote] = useState('')
-  const [authorName, setAuthorName] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('delivery_nickname') || ''
-    return ''
-  })
+  const [user, setUser] = useState<any>(null)
+  const [displayName, setDisplayName] = useState('')
+  const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) { router.push('/auth'); return }
+      setUser(user)
+      const { data: profile } = await supabase.from('profiles').select('display_name').eq('id', user.id).single()
+      if (profile?.display_name) setDisplayName(profile.display_name)
+      setLoading(false)
+    })
+  }, [router])
 
   const setDate = (key: string, val: string) => setDates(prev => ({ ...prev, [key]: val }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!dates.order_date) return
+    if (!dates.order_date || !user) return
     setSubmitting(true)
     setErrorMsg('')
-    const nickname = authorName.trim() || '匿名'
-    if (typeof window !== 'undefined' && authorName.trim()) {
-      localStorage.setItem('delivery_nickname', authorName.trim())
-    }
+    const authorName = displayName || user.email || '匿名'
     const { error } = await supabase.from('delivery_reports').insert({
       model, grade: grade || null,
       order_date: dates.order_date,
@@ -61,7 +67,8 @@ export default function NewDelivery() {
       confirmed_date: dates.confirmed_date || null,
       delivery_date: dates.delivery_date || null,
       region: region || null, color: color || null, note: note || null,
-      author_name: nickname,
+      author_name: authorName,
+      user_id: user.id,
     })
     if (error) {
       setErrorMsg(`送信エラー: ${error.message}`)
@@ -78,16 +85,16 @@ export default function NewDelivery() {
       <p style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>途中の段階でもOK！分かる日付だけ入力してください</p>
       <p style={{ fontSize: 12, color: '#555', marginBottom: 28 }}>みんなの進捗データが全員の役に立ちます</p>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {/* ニックネーム */}
-        <div>
-          <label style={lbl}>ニックネーム（任意）</label>
-          <input
-            type="text" value={authorName} onChange={e => setAuthorName(e.target.value)}
-            placeholder="例：東京のModel Yオーナー"
-            style={{ ...inp }}
-          />
-          <p style={{ fontSize: 11, color: '#555', marginTop: 6 }}>入力すると次回から自動入力されます。自分の投稿を識別するためにお使いください。</p>
+      {loading ? (
+        <div style={{ padding: '40px 0', textAlign: 'center' }}>
+          <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: '#404040' }}>LOADING...</span>
+        </div>
+      ) : null}
+
+      <form onSubmit={handleSubmit} style={{ display: loading ? 'none' : 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* 投稿者名 */}
+        <div style={{ padding: '12px 16px', background: 'rgba(0,255,255,0.04)', border: '1px solid rgba(0,255,255,0.12)', borderRadius: 8 }}>
+          <p style={{ fontSize: 12, color: '#888' }}>投稿者: <span style={{ color: '#00FFFF', fontWeight: 700 }}>{displayName || user?.email}</span></p>
         </div>
 
         {/* モデル */}

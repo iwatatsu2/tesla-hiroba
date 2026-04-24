@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase, DeliveryComment } from '@/lib/supabase'
 import XPBar from '@/components/XPBar'
+import Link from 'next/link'
 
 const MODEL_COLOR: Record<string, string> = { 'Model Y': '#A0A0A0', 'Model YL': '#10B981', 'Model 3': '#3B82F6' }
 
@@ -53,36 +54,57 @@ export default function DeliveryDetailPage() {
   const [report, setReport] = useState<any>(null)
   const [comments, setComments] = useState<DeliveryComment[]>([])
   const [commentBody, setCommentBody] = useState('')
-  const [commentName, setCommentName] = useState(() =>
-    typeof window !== 'undefined' ? localStorage.getItem('delivery_nickname') || '' : ''
-  )
   const [submitting, setSubmitting] = useState(false)
   const [likeCount, setLikeCount] = useState(0)
   const [liked, setLiked] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [displayName, setDisplayName] = useState('')
 
   useEffect(() => {
+    // ユーザー情報取得
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) {
+        setUser(user)
+        const { data: profile } = await supabase.from('profiles').select('display_name').eq('id', user.id).single()
+        if (profile?.display_name) setDisplayName(profile.display_name)
+      }
+    })
+
     async function load() {
       const { data: r } = await supabase.from('delivery_reports').select('*').eq('id', id).single()
       setReport(r)
       const { data: c } = await supabase.from('delivery_comments').select('*').eq('report_id', id).order('created_at')
       setComments(c || [])
       // いいね取得
-      const { data: likes } = await supabase.from('delivery_likes').select('liker_name').eq('report_id', id)
+      const { data: likes } = await supabase.from('delivery_likes').select('user_id').eq('report_id', id)
       setLikeCount(likes?.length || 0)
-      const nick = localStorage.getItem('delivery_nickname') || ''
-      if (nick && likes?.some(l => l.liker_name === nick)) setLiked(true)
+      // 自分のいいね状態チェック
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && likes?.some(l => l.user_id === user.id)) setLiked(true)
     }
     load()
   }, [id])
 
+  const handleLike = async () => {
+    if (!user) { router.push('/auth'); return }
+    if (liked) {
+      await supabase.from('delivery_likes').delete().eq('report_id', id).eq('user_id', user.id)
+      setLiked(false); setLikeCount(c => c - 1)
+    } else {
+      const name = displayName || user.email || ''
+      await supabase.from('delivery_likes').insert({ report_id: id, user_id: user.id, liker_name: name })
+      setLiked(true); setLikeCount(c => c + 1)
+    }
+  }
+
   const handleComment = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!user) { router.push('/auth'); return }
     if (!commentBody.trim()) return
     setSubmitting(true)
-    const name = commentName.trim() || '匿名'
-    if (commentName.trim()) localStorage.setItem('delivery_nickname', commentName.trim())
+    const name = displayName || user.email || '匿名'
     const { data } = await supabase.from('delivery_comments').insert({
-      report_id: id, body: commentBody.trim(), author_name: name,
+      report_id: id, body: commentBody.trim(), author_name: name, user_id: user.id,
     }).select().single()
     if (data) setComments(prev => [...prev, data])
     setCommentBody('')
@@ -98,6 +120,7 @@ export default function DeliveryDetailPage() {
   const color = MODEL_COLOR[report.model] || '#888'
   const waitDays = calcDays(report.order_date, report.delivery_date)
   const isComplete = !!report.delivery_date
+  const isMyPost = user && report.user_id === user.id
 
   return (
     <div style={{ maxWidth: 640, margin: '0 auto' }}>
@@ -110,7 +133,6 @@ export default function DeliveryDetailPage() {
       {/* レポート詳細 */}
       <div style={{ padding: '20px' }}>
         <div style={{ ...card, marginBottom: 16 }}>
-          {/* モデル・ステータス */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
             <span style={{ background: color + '25', color, borderRadius: 20, padding: '3px 12px', fontSize: 12, fontWeight: 700 }}>{report.model}</span>
             {report.grade && <span style={{ fontSize: 12, color: '#888' }}>{report.grade}</span>}
@@ -121,7 +143,6 @@ export default function DeliveryDetailPage() {
             )}
           </div>
 
-          {/* 納車日数 */}
           {isComplete && waitDays !== null ? (
             <div style={{ textAlign: 'center', marginBottom: 16, padding: '16px 0', background: 'rgba(16,185,129,0.06)', borderRadius: 8 }}>
               <span style={{ fontSize: 56, fontWeight: 800, color: '#10B981', letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{waitDays}</span>
@@ -135,7 +156,6 @@ export default function DeliveryDetailPage() {
             </div>
           )}
 
-          {/* マイルストーン */}
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 12 }}>
             {MILESTONES.filter(s => report[s.key]).map(s => (
               <div key={s.key}>
@@ -161,26 +181,18 @@ export default function DeliveryDetailPage() {
           )}
 
           <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button onClick={async () => {
-              const nick = commentName || localStorage.getItem('delivery_nickname') || ''
-              if (!nick) { alert('いいねするにはニックネームを入力してください'); return }
-              if (liked) {
-                await supabase.from('delivery_likes').delete().eq('report_id', id).eq('liker_name', nick)
-                setLiked(false); setLikeCount(c => c - 1)
-              } else {
-                await supabase.from('delivery_likes').insert({ report_id: id, liker_name: nick })
-                setLiked(true); setLikeCount(c => c + 1)
-              }
-            }}
+            <button onClick={handleLike}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: liked ? '#EF4444' : '#555', fontFamily: 'inherit', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6, transition: '150ms' }}>
               <span style={{ fontSize: 20 }}>{liked ? '❤️' : '🤍'}</span>
               <span style={{ fontSize: 13, fontWeight: 600 }}>{likeCount > 0 ? likeCount : ''}</span>
               <span style={{ fontSize: 12, color: '#666' }}>いいね</span>
             </button>
-            <button onClick={() => router.push(`/delivery/edit?id=${report.id}`)}
-              style={{ padding: '5px 14px', fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
-              ✏️ 修正する
-            </button>
+            {isMyPost && (
+              <button onClick={() => router.push(`/delivery/edit?id=${report.id}`)}
+                style={{ padding: '5px 14px', fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
+                ✏️ 修正する
+              </button>
+            )}
           </div>
         </div>
 
@@ -208,33 +220,40 @@ export default function DeliveryDetailPage() {
           )}
 
           {/* コメント入力 */}
-          <form onSubmit={handleComment} style={{ paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 8 }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <Avatar name={commentName || '?'} />
-              <div style={{ flex: 1 }}>
-                <input
-                  value={commentName}
-                  onChange={e => setCommentName(e.target.value)}
-                  placeholder="ニックネーム（任意）"
-                  style={{ width: '100%', padding: '8px 0', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 13, color: '#888', fontFamily: 'inherit', outline: 'none', marginBottom: 10 }}
-                />
-                <textarea
-                  value={commentBody}
-                  onChange={e => setCommentBody(e.target.value)}
-                  placeholder="コメントを書く..."
-                  required
-                  rows={3}
-                  style={{ width: '100%', padding: '8px 0', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 15, color: '#F0F0F0', fontFamily: 'inherit', outline: 'none', resize: 'none', lineHeight: 1.7 }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
-                  <button type="submit" disabled={submitting || !commentBody.trim()}
-                    style={{ padding: '8px 22px', background: !commentBody.trim() || submitting ? '#2A2A2A' : '#E8E8E8', color: !commentBody.trim() || submitting ? '#555' : '#111', border: 'none', borderRadius: 24, fontSize: 13, fontWeight: 700, cursor: !commentBody.trim() || submitting ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
-                    {submitting ? '送信中...' : 'コメント'}
-                  </button>
+          {user ? (
+            <form onSubmit={handleComment} style={{ paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 8 }}>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <Avatar name={displayName || user.email || '?'} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>{displayName || user.email} として投稿</p>
+                  <textarea
+                    value={commentBody}
+                    onChange={e => setCommentBody(e.target.value)}
+                    placeholder="コメントを書く..."
+                    required
+                    rows={3}
+                    style={{ width: '100%', padding: '8px 0', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 15, color: '#F0F0F0', fontFamily: 'inherit', outline: 'none', resize: 'none', lineHeight: 1.7 }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+                    <button type="submit" disabled={submitting || !commentBody.trim()}
+                      style={{ padding: '8px 22px', background: !commentBody.trim() || submitting ? '#2A2A2A' : '#E8E8E8', color: !commentBody.trim() || submitting ? '#555' : '#111', border: 'none', borderRadius: 24, fontSize: 13, fontWeight: 700, cursor: !commentBody.trim() || submitting ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+                      {submitting ? '送信中...' : 'コメント'}
+                    </button>
+                  </div>
                 </div>
               </div>
+            </form>
+          ) : (
+            <div style={{ paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 8, textAlign: 'center' }}>
+              <Link href="/auth" style={{
+                display: 'inline-block', padding: '10px 24px',
+                background: '#00FFFF', color: '#000', borderRadius: 24,
+                fontSize: 13, fontWeight: 700, textDecoration: 'none',
+              }}>
+                ログインしてコメント
+              </Link>
             </div>
-          </form>
+          )}
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface Breakdown {
   post_count: number
@@ -184,6 +185,13 @@ export default function ProfilePage() {
           )}
         </div>
       )}
+      {/* リファラルランキングリンク */}
+      <div style={{ marginTop: 32, padding: '16px', border: '1px solid rgba(0,255,255,0.15)', background: 'rgba(0,255,255,0.03)', textAlign: 'center' }}>
+        <Link href="/referral" style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: '#00FFFF', textDecoration: 'none' }}>
+          &gt; REFERRAL RANKING
+        </Link>
+        <p style={{ fontSize: 11, color: '#555', marginTop: 8 }}>紹介コードランキングを見る</p>
+      </div>
     </div>
   )
 }
