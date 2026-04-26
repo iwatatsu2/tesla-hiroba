@@ -252,19 +252,19 @@ export default function DeliveryPage() {
       </div>
 
       {/* サマリーカード */}
-      <div className="summary-grid">
+      <div style={{ display: 'flex', gap: 8, marginBottom: 36 }}>
         {summary.map(s => (
-          <div key={s.model} onClick={() => setSelectedModel(prev => prev === s.model ? null : s.model)} style={{ ...card, cursor: 'pointer', outline: selectedModel === s.model ? `2px solid ${MODEL_COLOR[s.model]}` : 'none', opacity: selectedModel && selectedModel !== s.model ? 0.4 : 1, transition: 'opacity 150ms, outline 150ms' }}>
-            <p style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>{s.model}</p>
+          <div key={s.model} onClick={() => setSelectedModel(prev => prev === s.model ? null : s.model)} style={{ ...card, flex: 1, minWidth: 0, cursor: 'pointer', outline: selectedModel === s.model ? `2px solid ${MODEL_COLOR[s.model]}` : 'none', opacity: selectedModel && selectedModel !== s.model ? 0.4 : 1, transition: 'opacity 150ms, outline 150ms', padding: '16px 12px' }}>
+            <p style={{ fontSize: 10, color: '#888', marginBottom: 6 }}>{s.model}</p>
             {s.avg !== null ? (
               <>
-                <p className="summary-num" style={{ fontSize: 48, fontWeight: 800, letterSpacing: '-0.03em', color: MODEL_COLOR[s.model], lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{s.avg}</p>
-                <p className="summary-label" style={{ fontSize: 12, color: '#666', marginTop: 4 }}>日（平均 · {s.count}件）</p>
+                <p style={{ fontSize: 'clamp(24px, 7vw, 48px)', fontWeight: 800, letterSpacing: '-0.03em', color: MODEL_COLOR[s.model], lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{s.avg}</p>
+                <p style={{ fontSize: 'clamp(9px, 2.5vw, 12px)', color: '#666', marginTop: 4 }}>日（平均·{s.count}件）</p>
               </>
             ) : (
-              <p style={{ fontSize: 24, fontWeight: 700, color: '#333' }}>データなし</p>
+              <p style={{ fontSize: 16, fontWeight: 700, color: '#333' }}>データなし</p>
             )}
-            {s.waiting > 0 && <p style={{ fontSize: 12, color: '#F59E0B', marginTop: 8 }}>⏳ {s.waiting}人待ち</p>}
+            {s.waiting > 0 && <p style={{ fontSize: 'clamp(9px, 2.5vw, 12px)', color: '#F59E0B', marginTop: 6 }}>⏳ {s.waiting}人待ち</p>}
           </div>
         ))}
       </div>
