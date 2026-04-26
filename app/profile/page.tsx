@@ -31,7 +31,7 @@ export default function ProfilePage() {
       setUser(user)
       const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       if (data) {
-        setDisplayName(data.display_name || '')
+        setDisplayName(data.tsla_display_name || data.display_name || '')
         setReferralCode(data.referral_code || '')
       }
       // スコア内訳を取得
@@ -39,7 +39,7 @@ export default function ProfilePage() {
       const json = await res.json()
       if (json.breakdown) {
         // 掲載回数も付加
-        const myName = data?.display_name || data?.referral_code
+        const myName = data?.tsla_display_name || data?.display_name || data?.referral_code
         const fc = (json.display_log as any[])?.filter(
           (l: any) => l.display_name === myName || l.referral_code === data?.referral_code
         ).length || 0
@@ -57,7 +57,7 @@ export default function ProfilePage() {
 
     const { error } = await supabase.from('profiles').upsert({
       id: user.id,
-      display_name: displayName.trim(),
+      tsla_display_name: displayName.trim(),
       referral_code: referralCode.trim(),
     })
 

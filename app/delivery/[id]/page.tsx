@@ -65,8 +65,8 @@ export default function DeliveryDetailPage() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
         setUser(user)
-        const { data: profile } = await supabase.from('profiles').select('display_name').eq('id', user.id).single()
-        if (profile?.display_name) setDisplayName(profile.display_name)
+        const { data: profile } = await supabase.from('profiles').select('tsla_display_name, display_name').eq('id', user.id).single()
+        setDisplayName(profile?.tsla_display_name || profile?.display_name || '')
       }
     })
 
