@@ -167,19 +167,19 @@ export default function Home() {
       {/* サマリー + 最新レポート */}
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px 80px' }}>
         {/* サマリーカード */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 36 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 36 }}>
           {summary.map(s => (
-            <div key={s.model} style={card}>
-              <p style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>{s.model}</p>
+            <div key={s.model} style={{ ...card, flex: 1, minWidth: 0, padding: '16px 12px' }}>
+              <p style={{ fontSize: 10, color: '#888', marginBottom: 6 }}>{s.model}</p>
               {s.avg !== null ? (
                 <>
-                  <p style={{ fontSize: 48, fontWeight: 800, letterSpacing: '-0.03em', color: MODEL_COLOR[s.model], lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{s.avg}</p>
-                  <p style={{ fontSize: 12, color: '#666', marginTop: 4 }}>日（注文→納車 平均 · {s.count}件）</p>
+                  <p style={{ fontSize: 'clamp(24px, 7vw, 48px)', fontWeight: 800, letterSpacing: '-0.03em', color: MODEL_COLOR[s.model], lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{s.avg}</p>
+                  <p style={{ fontSize: 'clamp(9px, 2.5vw, 12px)', color: '#666', marginTop: 4 }}>日（平均·{s.count}件）</p>
                 </>
               ) : (
-                <p style={{ fontSize: 24, fontWeight: 700, color: '#333' }}>データなし</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#333' }}>データなし</p>
               )}
-              {s.waiting > 0 && <p style={{ fontSize: 12, color: '#F59E0B', marginTop: 8 }}>⏳ 待ち中 {s.waiting}人</p>}
+              {s.waiting > 0 && <p style={{ fontSize: 'clamp(9px, 2.5vw, 12px)', color: '#F59E0B', marginTop: 6 }}>⏳ {s.waiting}人待ち</p>}
             </div>
           ))}
         </div>
