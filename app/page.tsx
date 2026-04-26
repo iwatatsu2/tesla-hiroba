@@ -26,6 +26,7 @@ export default function Home() {
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set())
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
+  const [openModels, setOpenModels] = useState<Set<string>>(new Set(MODELS))
 
   useEffect(() => {
     // ユーザー情報取得
@@ -193,43 +194,64 @@ export default function Home() {
             <Link href="/delivery/new" style={{ color: '#A0A0A0', fontSize: 13, textDecoration: 'none' }}>最初に報告する →</Link>
           </div>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {reports.map(r => {
-            const waitDays = calcDays(r.order_date, r.delivery_date)
-            const isComplete = !!r.delivery_date
-            const color = MODEL_COLOR[r.model] || '#888'
-            const cc = commentCounts[r.id] || 0
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {MODELS.map(model => {
+            const modelReports = reports.filter(r => r.model === model)
+            if (modelReports.length === 0) return null
+            const isOpen = openModels.has(model)
+            const mColor = MODEL_COLOR[model] || '#888'
             return (
-              <div key={r.id} onClick={() => router.push(`/delivery/${r.id}`)} style={{ ...card, cursor: 'pointer', transition: '120ms' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
-                  <span style={{ background: color + '25', color, borderRadius: 20, padding: '3px 12px', fontSize: 12, fontWeight: 700 }}>{r.model}</span>
-                  {r.grade && <span style={{ fontSize: 12, color: '#888' }}>{r.grade}</span>}
-                  {r.color && <span style={{ fontSize: 12, color: '#666' }}>· {r.color}</span>}
-                  {r.region && <span style={{ fontSize: 12, color: '#666' }}>· {r.region}</span>}
-                  {r.author_name && r.author_name !== '匿名' && <span style={{ fontSize: 11, color: '#555' }}>by {r.author_name}</span>}
-                  {isComplete && waitDays !== null ? (
-                    <div style={{ marginLeft: 'auto' }}>
-                      <span style={{ fontSize: 36, fontWeight: 800, color: '#10B981', letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{waitDays}</span>
-                      <span style={{ fontSize: 13, color: '#888', marginLeft: 4 }}>日で納車</span>
-                    </div>
-                  ) : (
-                    <span style={{ marginLeft: 'auto', background: '#F59E0B20', color: '#F59E0B', borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 600 }}>進行中 {calcDays(r.order_date, null)}日目</span>
-                  )}
-                </div>
-                <XPBar orderDate={r.order_date} vinDate={r.vin_date} docsDate={r.docs_date} deliveryDate={r.delivery_date} model={r.model} color={r.color} />
-                <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                    <button onClick={(e) => handleLike(e, r.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: myLikes.has(r.id) ? '#EF4444' : '#444', fontFamily: 'inherit', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 4, transition: '150ms' }}>
-                      {myLikes.has(r.id) ? '❤️' : '🤍'} {(likeCounts[r.id] || 0) > 0 ? likeCounts[r.id] : ''}
-                    </button>
-                    {cc > 0 ? (
-                      <span style={{ fontSize: 12, color: '#666' }}>💬 {cc}</span>
-                    ) : (
-                      <span style={{ fontSize: 12, color: '#444' }}>💬</span>
-                    )}
+              <div key={model}>
+                <button
+                  onClick={() => setOpenModels(prev => { const s = new Set(prev); s.has(model) ? s.delete(model) : s.add(model); return s })}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  <span style={{ fontSize: 12, color: '#888', transition: 'transform 150ms', transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
+                  <span style={{ background: mColor + '25', color: mColor, borderRadius: 20, padding: '3px 12px', fontSize: 12, fontWeight: 700 }}>{model}</span>
+                  <span style={{ fontSize: 12, color: '#666' }}>{modelReports.length}件</span>
+                </button>
+                {isOpen && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                    {modelReports.map(r => {
+                      const waitDays = calcDays(r.order_date, r.delivery_date)
+                      const isComplete = !!r.delivery_date
+                      const color = MODEL_COLOR[r.model] || '#888'
+                      const cc = commentCounts[r.id] || 0
+                      return (
+                        <div key={r.id} onClick={() => router.push(`/delivery/${r.id}`)} style={{ ...card, cursor: 'pointer', transition: '120ms' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+                            {r.grade && <span style={{ fontSize: 12, color: '#888' }}>{r.grade}</span>}
+                            {r.color && <span style={{ fontSize: 12, color: '#666' }}>· {r.color}</span>}
+                            {r.region && <span style={{ fontSize: 12, color: '#666' }}>· {r.region}</span>}
+                            {r.author_name && r.author_name !== '匿名' && <span style={{ fontSize: 11, color: '#555' }}>by {r.author_name}</span>}
+                            {isComplete && waitDays !== null ? (
+                              <div style={{ marginLeft: 'auto' }}>
+                                <span style={{ fontSize: 36, fontWeight: 800, color: '#10B981', letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{waitDays}</span>
+                                <span style={{ fontSize: 13, color: '#888', marginLeft: 4 }}>日で納車</span>
+                              </div>
+                            ) : (
+                              <span style={{ marginLeft: 'auto', background: '#F59E0B20', color: '#F59E0B', borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 600 }}>進行中 {calcDays(r.order_date, null)}日目</span>
+                            )}
+                          </div>
+                          <XPBar orderDate={r.order_date} vinDate={r.vin_date} docsDate={r.docs_date} deliveryDate={r.delivery_date} model={r.model} color={r.color} />
+                          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                              <button onClick={(e) => handleLike(e, r.id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: myLikes.has(r.id) ? '#EF4444' : '#444', fontFamily: 'inherit', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 4, transition: '150ms' }}>
+                                {myLikes.has(r.id) ? '❤️' : '🤍'} {(likeCounts[r.id] || 0) > 0 ? likeCounts[r.id] : ''}
+                              </button>
+                              {cc > 0 ? (
+                                <span style={{ fontSize: 12, color: '#666' }}>💬 {cc}</span>
+                              ) : (
+                                <span style={{ fontSize: 12, color: '#444' }}>💬</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                </div>
+                )}
               </div>
             )
           })}
