@@ -164,6 +164,7 @@ export default function DeliveryPage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [displayName, setDisplayName] = useState('')
+  const [selectedModel, setSelectedModel] = useState<string | null>(null)
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set())
@@ -251,25 +252,31 @@ export default function DeliveryPage() {
       </div>
 
       {/* サマリーカード */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 36 }}>
+      <div className="summary-grid">
         {summary.map(s => (
-          <div key={s.model} style={card}>
+          <div key={s.model} onClick={() => setSelectedModel(prev => prev === s.model ? null : s.model)} style={{ ...card, cursor: 'pointer', outline: selectedModel === s.model ? `2px solid ${MODEL_COLOR[s.model]}` : 'none', opacity: selectedModel && selectedModel !== s.model ? 0.4 : 1, transition: 'opacity 150ms, outline 150ms' }}>
             <p style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>{s.model}</p>
             {s.avg !== null ? (
               <>
-                <p style={{ fontSize: 48, fontWeight: 800, letterSpacing: '-0.03em', color: MODEL_COLOR[s.model], lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{s.avg}</p>
-                <p style={{ fontSize: 12, color: '#666', marginTop: 4 }}>日（注文→納車 平均 · {s.count}件）</p>
+                <p className="summary-num" style={{ fontSize: 48, fontWeight: 800, letterSpacing: '-0.03em', color: MODEL_COLOR[s.model], lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{s.avg}</p>
+                <p className="summary-label" style={{ fontSize: 12, color: '#666', marginTop: 4 }}>日（平均 · {s.count}件）</p>
               </>
             ) : (
               <p style={{ fontSize: 24, fontWeight: 700, color: '#333' }}>データなし</p>
             )}
-            {s.waiting > 0 && <p style={{ fontSize: 12, color: '#F59E0B', marginTop: 8 }}>⏳ 待ち中 {s.waiting}人</p>}
+            {s.waiting > 0 && <p style={{ fontSize: 12, color: '#F59E0B', marginTop: 8 }}>⏳ {s.waiting}人待ち</p>}
           </div>
         ))}
       </div>
 
+      {selectedModel && (
+        <p onClick={() => setSelectedModel(null)} style={{ fontSize: 12, color: '#888', marginBottom: 12, cursor: 'pointer' }}>
+          🔍 {selectedModel} でフィルター中　<span style={{ color: '#555', textDecoration: 'underline' }}>すべて表示</span>
+        </p>
+      )}
+
       {/* ガントチャート */}
-      {!loading && <GanttChart reports={reports} />}
+      {!loading && <GanttChart reports={selectedModel ? reports.filter(r => r.model === selectedModel) : reports} />}
 
       {/* 時系列グラフ */}
       <div style={{ ...card, marginBottom: 36 }}>
@@ -298,7 +305,7 @@ export default function DeliveryPage() {
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {[...reports].reverse().map(r => {
+        {[...reports].filter(r => !selectedModel || r.model === selectedModel).reverse().map(r => {
           const waitDays = calcDays(r.order_date, r.delivery_date)
           const isComplete = !!r.delivery_date
           const color = MODEL_COLOR[r.model] || '#888'

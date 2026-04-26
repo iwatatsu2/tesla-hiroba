@@ -95,6 +95,26 @@ input::placeholder, textarea::placeholder { color: var(--text-dim); }
 /* pixel font */
 .px-font { font-family: var(--font-pixel); }
 
+/* summary grid */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 36px;
+}
+@media (max-width: 640px) {
+  .summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .summary-grid .summary-num {
+    font-size: 28px !important;
+  }
+  .summary-grid .summary-label {
+    font-size: 10px !important;
+  }
+}
+
 /* scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
