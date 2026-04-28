@@ -95,6 +95,16 @@ export default function McDetailPage() {
 
           {post.body && <p style={{ fontSize: 14, color: '#A0A0A0', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{post.body}</p>}
 
+          {post.image_urls && post.image_urls.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginTop: 12 }}>
+              {post.image_urls.map((url, i) => (
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                  <img src={url} alt="" style={{ width: 160, height: 120, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                </a>
+              ))}
+            </div>
+          )}
+
           <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.04)', fontSize: 11, color: '#555' }}>
             {post.author_name || '匿名'} · {new Date(post.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric' })}
           </div>

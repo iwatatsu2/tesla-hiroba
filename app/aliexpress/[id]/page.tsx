@@ -88,6 +88,16 @@ export default function AliexpressDetailPage() {
 
           {post.body && <p style={{ fontSize: 14, color: '#A0A0A0', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginBottom: 12 }}>{post.body}</p>}
 
+          {post.image_urls && post.image_urls.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 12 }}>
+              {post.image_urls.map((url, i) => (
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                  <img src={url} alt="" style={{ width: 160, height: 120, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                </a>
+              ))}
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {post.tags?.map(t => (
               <span key={t} style={{ padding: '2px 8px', fontSize: 10, borderRadius: 10, background: '#EC489915', color: '#EC4899', border: '1px solid #EC489930' }}>{t}</span>

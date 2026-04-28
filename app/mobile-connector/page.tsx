@@ -46,6 +46,7 @@ export default function MobileConnectorPage() {
   const [solutionType, setSolutionType] = useState('other')
   const [model, setModel] = useState('')
   const [region, setRegion] = useState('')
+  const [photos, setPhotos] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -73,14 +74,27 @@ export default function MobileConnectorPage() {
     if (!user) { router.push('/auth'); return }
     if (!title.trim()) return
     setSubmitting(true)
+
+    const imageUrls: string[] = []
+    for (const photo of photos) {
+      const ext = photo.name.split('.').pop()
+      const path = `mc/${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`
+      const { data: uploaded } = await supabase.storage.from('post-images').upload(path, photo)
+      if (uploaded) {
+        const { data: { publicUrl } } = supabase.storage.from('post-images').getPublicUrl(uploaded.path)
+        imageUrls.push(publicUrl)
+      }
+    }
+
     const { data } = await supabase.from('mc_posts').insert({
       user_id: user.id,
       author_name: displayName || user.email || '匿名',
       title: title.trim(), body: body.trim() || null,
       solution_type: solutionType, model: model || null, region: region || null,
+      image_urls: imageUrls.length > 0 ? imageUrls : [],
     }).select().single()
     if (data) setPosts(prev => [data, ...prev])
-    setTitle(''); setBody(''); setSolutionType('other'); setModel(''); setRegion('')
+    setTitle(''); setBody(''); setSolutionType('other'); setModel(''); setRegion(''); setPhotos([])
     setShowForm(false); setSubmitting(false)
   }
 
@@ -161,6 +175,28 @@ export default function MobileConnectorPage() {
             </select>
           </div>
 
+          {/* 写真 */}
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: 'inline-block', padding: '8px 16px', background: '#242424', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12, color: '#888', cursor: 'pointer', fontFamily: 'inherit' }}>
+              📷 写真を追加（最大5枚）
+              <input type="file" accept="image/*" multiple hidden onChange={e => {
+                const files = Array.from(e.target.files || []).slice(0, 5)
+                setPhotos(files)
+              }} />
+            </label>
+            {photos.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                {photos.map((f, i) => (
+                  <div key={i} style={{ position: 'relative' }}>
+                    <img src={URL.createObjectURL(f)} alt="" style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8 }} />
+                    <button onClick={() => setPhotos(prev => prev.filter((_, j) => j !== i))}
+                      style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: '50%', background: '#F59E0B', color: '#000', border: 'none', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button onClick={handleSubmit} disabled={!title.trim() || submitting}
               style={{ padding: '10px 24px', background: !title.trim() || submitting ? '#333' : '#F59E0B', color: '#000', border: 'none', borderRadius: 24, fontSize: 13, fontWeight: 700, cursor: !title.trim() || submitting ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
@@ -204,6 +240,14 @@ export default function MobileConnectorPage() {
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#F0F0F0' }}>{p.title}</span>
               </div>
               {p.body && <p style={{ fontSize: 13, color: '#888', lineHeight: 1.6, marginBottom: 6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any, overflow: 'hidden' }}>{p.body}</p>}
+              {p.image_urls && p.image_urls.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, marginBottom: 6, overflowX: 'auto' }}>
+                  {p.image_urls.slice(0, 3).map((url, i) => (
+                    <img key={i} src={url} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
+                  ))}
+                  {p.image_urls.length > 3 && <span style={{ fontSize: 11, color: '#555', alignSelf: 'center' }}>+{p.image_urls.length - 3}</span>}
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 10, color: '#555' }}>
                 {p.model && <span>{p.model}</span>}
                 {p.region && <span>📍{p.region}</span>}

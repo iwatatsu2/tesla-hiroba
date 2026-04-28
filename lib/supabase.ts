@@ -138,6 +138,7 @@ export interface AliexpressPost {
   rating: number
   model: string | null
   tags: string[]
+  image_urls: string[]
   likes: number
   created_at: string
 }
@@ -160,6 +161,7 @@ export interface McPost {
   solution_type: string
   model: string | null
   region: string | null
+  image_urls: string[]
   likes: number
   created_at: string
 }

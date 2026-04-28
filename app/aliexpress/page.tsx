@@ -37,6 +37,7 @@ export default function AliexpressPage() {
   const [rating, setRating] = useState(5)
   const [model, setModel] = useState('')
   const [tags, setTags] = useState<string[]>([])
+  const [photos, setPhotos] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -64,15 +65,29 @@ export default function AliexpressPage() {
     if (!user) { router.push('/auth'); return }
     if (!title.trim()) return
     setSubmitting(true)
+
+    // 写真アップロード
+    const imageUrls: string[] = []
+    for (const photo of photos) {
+      const ext = photo.name.split('.').pop()
+      const path = `aliexpress/${user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`
+      const { data: uploaded } = await supabase.storage.from('post-images').upload(path, photo)
+      if (uploaded) {
+        const { data: { publicUrl } } = supabase.storage.from('post-images').getPublicUrl(uploaded.path)
+        imageUrls.push(publicUrl)
+      }
+    }
+
     const { data } = await supabase.from('aliexpress_posts').insert({
       user_id: user.id,
       author_name: displayName || user.email || '匿名',
       title: title.trim(), body: body.trim() || null,
       url: url.trim() || null, price: price.trim() || null,
       rating, model: model || null, tags,
+      image_urls: imageUrls.length > 0 ? imageUrls : [],
     }).select().single()
     if (data) setPosts(prev => [data, ...prev])
-    setTitle(''); setBody(''); setUrl(''); setPrice(''); setRating(5); setModel(''); setTags([])
+    setTitle(''); setBody(''); setUrl(''); setPrice(''); setRating(5); setModel(''); setTags([]); setPhotos([])
     setShowForm(false); setSubmitting(false)
   }
 
@@ -137,6 +152,28 @@ export default function AliexpressPage() {
             ))}
           </div>
 
+          {/* 写真 */}
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: 'inline-block', padding: '8px 16px', background: '#242424', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12, color: '#888', cursor: 'pointer', fontFamily: 'inherit' }}>
+              📷 写真を追加（最大5枚）
+              <input type="file" accept="image/*" multiple hidden onChange={e => {
+                const files = Array.from(e.target.files || []).slice(0, 5)
+                setPhotos(files)
+              }} />
+            </label>
+            {photos.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                {photos.map((f, i) => (
+                  <div key={i} style={{ position: 'relative' }}>
+                    <img src={URL.createObjectURL(f)} alt="" style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8 }} />
+                    <button onClick={() => setPhotos(prev => prev.filter((_, j) => j !== i))}
+                      style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: '50%', background: '#EC4899', color: '#fff', border: 'none', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button onClick={handleSubmit} disabled={!title.trim() || submitting}
               style={{ padding: '10px 24px', background: !title.trim() || submitting ? '#333' : '#EC4899', color: '#fff', border: 'none', borderRadius: 24, fontSize: 13, fontWeight: 700, cursor: !title.trim() || submitting ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
@@ -189,8 +226,13 @@ export default function AliexpressPage() {
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                <span style={{ fontSize: 14, color: '#F59E0B' }}>{'★'.repeat(p.rating)}</span>
+                {p.image_urls && p.image_urls.length > 0 ? (
+                  <img src={p.image_urls[0]} alt="" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8 }} />
+                ) : (
+                  <span style={{ fontSize: 14, color: '#F59E0B' }}>{'★'.repeat(p.rating)}</span>
+                )}
                 <div style={{ display: 'flex', gap: 8, fontSize: 11, color: '#555' }}>
+                  {p.image_urls && p.image_urls.length > 1 && <span>📷{p.image_urls.length}</span>}
                   {(commentCounts[p.id] || 0) > 0 && <span>💬{commentCounts[p.id]}</span>}
                 </div>
               </div>

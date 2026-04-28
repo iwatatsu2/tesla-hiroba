@@ -148,12 +148,34 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
 
   return (
     <div style={{ marginTop: 12, padding: '10px 0 0' }}>
-      <style>{`@keyframes xpGrow { from { width: 0% } }`}</style>
+      <style>{`
+        @keyframes xpGrow { from { width: 0% } }
+        @keyframes clearBlink { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
+        @keyframes clearPulse { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.05) } }
+      `}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#404040' }}>LVL {level}</span>
         <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: neonColor }}>{xp} XP</span>
       </div>
+
+      {/* CLEAR!! 表示 */}
+      {xp === 100 && (
+        <div style={{
+          textAlign: 'center', marginBottom: 8, padding: '10px 0',
+          background: 'rgba(57,255,20,0.06)', border: '1px solid rgba(57,255,20,0.3)', borderRadius: 8,
+          animation: 'clearPulse 2s ease infinite',
+        }}>
+          <span style={{
+            fontFamily: "'Press Start 2P', monospace", fontSize: 18, color: '#39FF14',
+            textShadow: '0 0 10px #39FF14, 0 0 20px #39FF1480',
+            letterSpacing: '0.15em',
+            animation: 'clearBlink 1.5s ease infinite',
+          }}>
+            CLEAR!!
+          </span>
+        </div>
+      )}
 
       {/* XPバー + 車 */}
       <div style={{ position: 'relative', paddingTop: model === 'Model 3' ? 64 : 44 }}>
