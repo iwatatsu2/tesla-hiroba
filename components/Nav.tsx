@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation'
 const MENU = [
   { href: '/delivery', label: 'DELIVERY', match: (p: string) => p === '/' || p.startsWith('/delivery') },
   { href: '/map', label: 'CHARGE', match: (p: string) => p.startsWith('/map') || p.startsWith('/spots') },
+  { href: '/aliexpress', label: 'ALIEX', match: (p: string) => p.startsWith('/aliexpress') },
+  { href: '/mobile-connector', label: 'MC', match: (p: string) => p.startsWith('/mobile-connector') },
   { href: '/news', label: 'NEWS', match: (p: string) => p.startsWith('/news') },
   { href: '/videos', label: 'VIDEO', match: (p: string) => p.startsWith('/videos') },
   { href: '/referral', label: 'REFER', match: (p: string) => p.startsWith('/referral') },

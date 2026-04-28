@@ -174,7 +174,7 @@ export default function ReferralPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {[
               { step: '01', text: '会員登録してプロフィールにTesla紹介コードを入力' },
-              { step: '02', text: '納車レポート投稿・コメントでスコアが上がる' },
+              { step: '02', text: '納車レポート・アリエク購入品・MC情報の投稿やコメントでスコアが上がる' },
               { step: '03', text: 'ランキング上位者の紹介コードが自動掲載（1時間ごと更新）' },
               { step: '04', text: 'コードが使用されたら24時間クールダウン→次点へ切替' },
             ].map(({ step, text }) => (
@@ -192,7 +192,9 @@ export default function ReferralPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
               { action: '納車レポート投稿', pts: '+2 pts' },
-              { action: 'いいね（もらう）', pts: '+1 pt' },
+              { action: 'アリエク購入品投稿', pts: '+3 pts' },
+              { action: 'MC情報投稿', pts: '+3 pts' },
+              { action: 'いいね（もらう）', pts: '+1~3 pts' },
               { action: 'コメント1件', pts: '+1 pt' },
             ].map(({ action, pts }) => (
               <div key={action} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -127,6 +127,52 @@ export interface DeliveryReview {
   created_at: string
 }
 
+export interface AliexpressPost {
+  id: string
+  user_id: string | null
+  author_name: string | null
+  title: string
+  body: string | null
+  url: string | null
+  price: string | null
+  rating: number
+  model: string | null
+  tags: string[]
+  likes: number
+  created_at: string
+}
+
+export interface AliexpressComment {
+  id: string
+  post_id: string
+  user_id: string | null
+  author_name: string | null
+  body: string
+  created_at: string
+}
+
+export interface McPost {
+  id: string
+  user_id: string | null
+  author_name: string | null
+  title: string
+  body: string | null
+  solution_type: string
+  model: string | null
+  region: string | null
+  likes: number
+  created_at: string
+}
+
+export interface McComment {
+  id: string
+  post_id: string
+  user_id: string | null
+  author_name: string | null
+  body: string
+  created_at: string
+}
+
 export interface SpotPhoto {
   id: string
   spot_id: string
