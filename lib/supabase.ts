@@ -107,6 +107,26 @@ export interface DeliveryComment {
   created_at: string
 }
 
+export interface DeliveryMilestone {
+  id: string
+  report_id: string
+  user_id: string
+  emoji: string
+  title: string
+  note: string | null
+  milestone_date: string
+  created_at: string
+}
+
+export interface DeliveryReview {
+  id: string
+  report_id: string
+  user_id: string
+  rating: number
+  body: string | null
+  created_at: string
+}
+
 export interface SpotPhoto {
   id: string
   spot_id: string

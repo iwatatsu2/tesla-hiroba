@@ -43,10 +43,11 @@ export default function NewDelivery() {
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { router.push('/auth'); return }
-      setUser(user)
-      const { data: profile } = await supabase.from('profiles').select('tsla_display_name, display_name').eq('id', user.id).single()
-      setDisplayName(profile?.tsla_display_name || profile?.display_name || '')
+      if (user) {
+        setUser(user)
+        const { data: profile } = await supabase.from('profiles').select('tsla_display_name, display_name').eq('id', user.id).single()
+        setDisplayName(profile?.tsla_display_name || profile?.display_name || '')
+      }
       setLoading(false)
     })
   }, [router])
@@ -55,7 +56,8 @@ export default function NewDelivery() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!dates.order_date || !user) return
+    if (!dates.order_date) return
+    if (!user) { router.push('/auth'); return }
     setSubmitting(true)
     setErrorMsg('')
     const authorName = displayName || user.email || '匿名'

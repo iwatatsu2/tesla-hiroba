@@ -156,6 +156,21 @@ function GanttChart({ reports }: { reports: any[] }) {
 }
 
 
+// オーナーバッジ定義
+const OWNER_BADGES = [
+  { days: 30, icon: '🌱' },
+  { days: 100, icon: '💯' },
+  { days: 365, icon: '🏆' },
+  { days: 730, icon: '👑' },
+]
+
+function getTopBadge(deliveryDate: string | null): string | null {
+  if (!deliveryDate) return null
+  const days = Math.round((Date.now() - new Date(deliveryDate).getTime()) / 86400000)
+  const earned = OWNER_BADGES.filter(b => days >= b.days)
+  return earned.length > 0 ? earned[earned.length - 1].icon : null
+}
+
 const card = { background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px 22px' }
 
 export default function DeliveryPage() {
@@ -168,6 +183,7 @@ export default function DeliveryPage() {
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set())
+  const [reviews, setReviews] = useState<Record<string, number>>({})
 
   useEffect(() => {
     // ユーザー情報
@@ -196,6 +212,12 @@ export default function DeliveryPage() {
           const counts: Record<string, number> = {}
           likes?.forEach(l => { counts[l.report_id] = (counts[l.report_id] || 0) + 1 })
           setLikeCounts(counts)
+        })
+        // レビュー取得
+        supabase.from('delivery_reviews').select('report_id, rating').then(({ data: rvs }) => {
+          const map: Record<string, number> = {}
+          rvs?.forEach(r => { map[r.report_id] = r.rating })
+          setReviews(map)
         })
       }
     })
@@ -269,6 +291,39 @@ export default function DeliveryPage() {
         ))}
       </div>
 
+      {/* オーナー満足度 */}
+      {(() => {
+        const ratings = Object.values(reviews)
+        if (ratings.length === 0) return null
+        const avg = (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+        return (
+          <div style={{ ...card, marginBottom: 36, display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+            <div>
+              <p style={{ fontSize: 10, color: '#888', marginBottom: 4 }}>OWNER SATISFACTION</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 36, fontWeight: 800, color: '#F59E0B', lineHeight: 1 }}>{avg}</span>
+                <span style={{ fontSize: 20, color: '#F59E0B' }}>{'★'.repeat(Math.round(Number(avg)))}</span>
+              </div>
+              <p style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{ratings.length}件のオーナーレビュー</p>
+            </div>
+            <div style={{ display: 'flex', gap: 4, flex: 1, minWidth: 120 }}>
+              {[5, 4, 3, 2, 1].map(n => {
+                const count = ratings.filter(r => r === n).length
+                const pct = (count / ratings.length) * 100
+                return (
+                  <div key={n} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <div style={{ width: '100%', height: 40, background: '#242424', borderRadius: 4, position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ position: 'absolute', bottom: 0, width: '100%', height: `${pct}%`, background: '#F59E0B40', borderRadius: 4 }} />
+                    </div>
+                    <span style={{ fontSize: 9, color: '#666' }}>{n}★</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
+
       {selectedModel && (
         <p onClick={() => setSelectedModel(null)} style={{ fontSize: 12, color: '#888', marginBottom: 12, cursor: 'pointer' }}>
           🔍 {selectedModel} でフィルター中　<span style={{ color: '#555', textDecoration: 'underline' }}>すべて表示</span>
@@ -322,6 +377,8 @@ export default function DeliveryPage() {
                 {r.color && <span style={{ fontSize: 12, color: '#666' }}>· {r.color}</span>}
                 {r.region && <span style={{ fontSize: 12, color: '#666' }}>· {r.region}</span>}
                 {r.author_name && r.author_name !== '匿名' && <span style={{ fontSize: 11, color: '#555' }}>by {r.author_name}</span>}
+                {getTopBadge(r.delivery_date) && <span style={{ fontSize: 14 }}>{getTopBadge(r.delivery_date)}</span>}
+                {reviews[r.id] && <span style={{ fontSize: 11, color: '#F59E0B' }}>{'★'.repeat(reviews[r.id])}</span>}
                 {isComplete && waitDays !== null ? (
                   <div style={{ marginLeft: 'auto' }}>
                     <span style={{ fontSize: 36, fontWeight: 800, color: '#10B981', letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{waitDays}</span>
