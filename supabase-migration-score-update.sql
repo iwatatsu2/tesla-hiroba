@@ -11,7 +11,7 @@
 CREATE OR REPLACE VIEW referral_ranking AS
 SELECT
   p.id,
-  p.display_name,
+  COALESCE(p.tsla_display_name, p.display_name) AS display_name,
   p.referral_code,
   p.referral_cooldown_until,
   -- 既存posts
@@ -74,7 +74,7 @@ ORDER BY score DESC;
 CREATE OR REPLACE VIEW score_breakdown AS
 SELECT
   p.id,
-  p.display_name,
+  COALESCE(p.tsla_display_name, p.display_name) AS display_name,
   p.referral_code,
   COALESCE(post_stats.post_count, 0) AS post_count,
   COALESCE(post_stats.total_likes, 0) AS total_likes,
