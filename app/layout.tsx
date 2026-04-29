@@ -4,6 +4,7 @@ import Nav from '@/components/Nav'
 import PixelBar from '@/components/PixelBar'
 import Footer from '@/components/Footer'
 import StartScreen from '@/components/StartScreen'
+import InstallBanner from '@/components/InstallBanner'
 
 export const metadata: Metadata = {
   title: 'TSLA PARK',
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main style={{ paddingTop: 60, minHeight: '100vh' }}>{children}</main>
         <PixelBar />
         <Footer />
+        <InstallBanner />
       </body>
     </html>
   )

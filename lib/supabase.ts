@@ -149,6 +149,7 @@ export interface AliexpressComment {
   user_id: string | null
   author_name: string | null
   body: string
+  parent_id: string | null
   created_at: string
 }
 
@@ -172,6 +173,7 @@ export interface McComment {
   user_id: string | null
   author_name: string | null
   body: string
+  parent_id: string | null
   created_at: string
 }
 

@@ -26,7 +26,7 @@ export default function Home() {
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set())
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
-  const [openModels, setOpenModels] = useState<Set<string>>(new Set(MODELS))
+  const [openModels, setOpenModels] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     // ユーザー情報取得

@@ -32,6 +32,7 @@ export default function AliexpressDetailPage() {
   const [post, setPost] = useState<AliexpressPost | null>(null)
   const [comments, setComments] = useState<AliexpressComment[]>([])
   const [commentBody, setCommentBody] = useState('')
+  const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [displayName, setDisplayName] = useState('')
@@ -77,9 +78,10 @@ export default function AliexpressDetailPage() {
     setSubmitting(true)
     const { data } = await supabase.from('aliexpress_comments').insert({
       post_id: id, user_id: user.id, author_name: displayName || user.email || '匿名', body: commentBody.trim(),
+      parent_id: replyTo?.id || null,
     }).select().single()
     if (data) setComments(prev => [...prev, data])
-    setCommentBody(''); setSubmitting(false)
+    setCommentBody(''); setReplyTo(null); setSubmitting(false)
   }
 
   if (!post) return <div style={{ maxWidth: 640, margin: '0 auto', padding: '80px 24px', color: '#444', textAlign: 'center', fontSize: 14 }}>読み込み中...</div>
@@ -153,24 +155,53 @@ export default function AliexpressDetailPage() {
             コメント {comments.length > 0 && <span style={{ color: '#EC4899' }}>{comments.length}</span>}
           </p>
 
-          {comments.map(c => (
-            <div key={c.id} style={{ display: 'flex', gap: 10, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-              <Avatar name={c.author_name || '匿名'} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 3 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#F0F0F0' }}>{c.author_name || '匿名'}</span>
-                  <span style={{ fontSize: 11, color: '#555' }}>{relativeTime(c.created_at)}</span>
+          {comments.filter(c => !c.parent_id).map(c => {
+            const replies = comments.filter(r => r.parent_id === c.id)
+            return (
+              <div key={c.id}>
+                <div style={{ display: 'flex', gap: 10, padding: '10px 0', borderBottom: replies.length > 0 ? 'none' : '1px solid rgba(255,255,255,0.04)' }}>
+                  <Avatar name={c.author_name || '匿名'} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 3 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#F0F0F0' }}>{c.author_name || '匿名'}</span>
+                      <span style={{ fontSize: 11, color: '#555' }}>{relativeTime(c.created_at)}</span>
+                    </div>
+                    <p style={{ fontSize: 14, color: '#C0C0C0', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{c.body}</p>
+                    {user && (
+                      <button onClick={() => setReplyTo({ id: c.id, name: c.author_name || '匿名' })}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#555', fontFamily: 'inherit', padding: '4px 0', marginTop: 2 }}>
+                        返信する
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <p style={{ fontSize: 14, color: '#C0C0C0', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{c.body}</p>
+                {replies.map(r => (
+                  <div key={r.id} style={{ display: 'flex', gap: 8, padding: '8px 0 8px 42px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <Avatar name={r.author_name || '匿名'} size={24} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 2 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#F0F0F0' }}>{r.author_name || '匿名'}</span>
+                        <span style={{ fontSize: 10, color: '#555' }}>{relativeTime(r.created_at)}</span>
+                      </div>
+                      <p style={{ fontSize: 13, color: '#C0C0C0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{r.body}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
+            )
+          })}
 
           {comments.length === 0 && <p style={{ fontSize: 13, color: '#444', textAlign: 'center', padding: '12px 0' }}>まだコメントがありません</p>}
 
           {user ? (
             <form onSubmit={handleComment} style={{ paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 8 }}>
-              <textarea value={commentBody} onChange={e => setCommentBody(e.target.value)} placeholder="コメントを書く..." required rows={3}
+              {replyTo && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '6px 10px', background: '#1A1A1A', borderRadius: 6, fontSize: 12, color: '#888' }}>
+                  <span>↩️ {replyTo.name} に返信</span>
+                  <button type="button" onClick={() => setReplyTo(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555', fontSize: 14, fontFamily: 'inherit', marginLeft: 'auto' }}>✕</button>
+                </div>
+              )}
+              <textarea value={commentBody} onChange={e => setCommentBody(e.target.value)} placeholder={replyTo ? `${replyTo.name} に返信...` : 'コメントを書く...'} required rows={3}
                 style={{ width: '100%', padding: '8px 0', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 15, color: '#F0F0F0', fontFamily: 'inherit', outline: 'none', resize: 'none', lineHeight: 1.7 }} />
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
                 <button type="submit" disabled={submitting || !commentBody.trim()}

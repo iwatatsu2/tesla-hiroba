@@ -259,8 +259,8 @@ export default function MobileConnectorPage() {
                 {p.region && <span>📍{p.region}</span>}
                 <span>by {p.author_name || '匿名'}</span>
                 <span style={{ color: '#333' }}>{relativeTime(p.created_at)}</span>
-                {(likeCounts[p.id] || 0) > 0 && <span>❤️{likeCounts[p.id]}</span>}
-                {(commentCounts[p.id] || 0) > 0 && <span>💬{commentCounts[p.id]}</span>}
+                <span>❤️{likeCounts[p.id] || 0}</span>
+                <span>💬{commentCounts[p.id] || 0}</span>
               </div>
             </div>
           )
