@@ -35,6 +35,8 @@ export default function AliexpressDetailPage() {
   const [submitting, setSubmitting] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [displayName, setDisplayName] = useState('')
+  const [likeCount, setLikeCount] = useState(0)
+  const [liked, setLiked] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -46,7 +48,27 @@ export default function AliexpressDetailPage() {
     })
     supabase.from('aliexpress_posts').select('*').eq('id', id).single().then(({ data }) => setPost(data))
     supabase.from('aliexpress_comments').select('*').eq('post_id', id).order('created_at').then(({ data }) => setComments(data || []))
+    // いいね読み込み
+    async function loadLikes() {
+      const { data: likes } = await supabase.from('aliexpress_likes').select('user_id').eq('post_id', id)
+      setLikeCount(likes?.length || 0)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && likes?.some(l => l.user_id === user.id)) setLiked(true)
+    }
+    loadLikes()
   }, [id])
+
+  const handleLike = async () => {
+    if (!user) { router.push('/auth'); return }
+    if (liked) {
+      await supabase.from('aliexpress_likes').delete().eq('post_id', id).eq('user_id', user.id)
+      setLiked(false); setLikeCount(c => c - 1)
+    } else {
+      const name = displayName || user.email || ''
+      await supabase.from('aliexpress_likes').insert({ post_id: id, user_id: user.id, liker_name: name })
+      setLiked(true); setLikeCount(c => c + 1)
+    }
+  }
 
   const handleComment = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,8 +126,24 @@ export default function AliexpressDetailPage() {
             ))}
           </div>
 
-          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.04)', fontSize: 11, color: '#555' }}>
-            {post.author_name || '匿名'} · {new Date(post.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric' })}
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button onClick={handleLike}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: liked ? '#EF4444' : '#555', fontFamily: 'inherit', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6, transition: '150ms' }}>
+              <span style={{ fontSize: 20 }}>{liked ? '❤️' : '🤍'}</span>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{likeCount > 0 ? likeCount : ''}</span>
+              <span style={{ fontSize: 12, color: '#666' }}>いいね</span>
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 11, color: '#555' }}>
+                {post.author_name || '匿名'} · {new Date(post.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric' })}
+              </span>
+              {user && post.user_id === user.id && (
+                <button onClick={() => router.push(`/aliexpress/edit?id=${post.id}`)}
+                  style={{ padding: '5px 14px', fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  ✏️ 修正する
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

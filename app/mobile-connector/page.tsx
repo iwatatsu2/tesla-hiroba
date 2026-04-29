@@ -38,6 +38,7 @@ export default function MobileConnectorPage() {
   const [displayName, setDisplayName] = useState('')
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
 
   // フォーム
   const [showForm, setShowForm] = useState(false)
@@ -65,6 +66,11 @@ export default function MobileConnectorPage() {
           const counts: Record<string, number> = {}
           comments?.forEach(c => { counts[c.post_id] = (counts[c.post_id] || 0) + 1 })
           setCommentCounts(counts)
+        })
+        supabase.from('mc_likes').select('post_id').then(({ data: likes }) => {
+          const counts: Record<string, number> = {}
+          likes?.forEach(l => { counts[l.post_id] = (counts[l.post_id] || 0) + 1 })
+          setLikeCounts(counts)
         })
       }
     })
@@ -253,6 +259,7 @@ export default function MobileConnectorPage() {
                 {p.region && <span>📍{p.region}</span>}
                 <span>by {p.author_name || '匿名'}</span>
                 <span style={{ color: '#333' }}>{relativeTime(p.created_at)}</span>
+                {(likeCounts[p.id] || 0) > 0 && <span>❤️{likeCounts[p.id]}</span>}
                 {(commentCounts[p.id] || 0) > 0 && <span>💬{commentCounts[p.id]}</span>}
               </div>
             </div>

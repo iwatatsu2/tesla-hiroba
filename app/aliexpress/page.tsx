@@ -27,6 +27,7 @@ export default function AliexpressPage() {
   const [displayName, setDisplayName] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
 
   // フォーム
   const [showForm, setShowForm] = useState(false)
@@ -56,6 +57,11 @@ export default function AliexpressPage() {
           const counts: Record<string, number> = {}
           comments?.forEach(c => { counts[c.post_id] = (counts[c.post_id] || 0) + 1 })
           setCommentCounts(counts)
+        })
+        supabase.from('aliexpress_likes').select('post_id').then(({ data: likes }) => {
+          const counts: Record<string, number> = {}
+          likes?.forEach(l => { counts[l.post_id] = (counts[l.post_id] || 0) + 1 })
+          setLikeCounts(counts)
         })
       }
     })
@@ -233,6 +239,7 @@ export default function AliexpressPage() {
                 )}
                 <div style={{ display: 'flex', gap: 8, fontSize: 11, color: '#555' }}>
                   {p.image_urls && p.image_urls.length > 1 && <span>📷{p.image_urls.length}</span>}
+                  {(likeCounts[p.id] || 0) > 0 && <span>❤️{likeCounts[p.id]}</span>}
                   {(commentCounts[p.id] || 0) > 0 && <span>💬{commentCounts[p.id]}</span>}
                 </div>
               </div>

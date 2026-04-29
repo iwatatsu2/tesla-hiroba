@@ -184,6 +184,8 @@ export default function DeliveryPage() {
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set())
   const [reviews, setReviews] = useState<Record<string, number>>({})
+  const [openModels, setOpenModels] = useState<Set<string>>(new Set())
+  const [sortMode, setSortMode] = useState('newest')
 
   useEffect(() => {
     // ユーザー情報
@@ -236,6 +238,91 @@ export default function DeliveryPage() {
       setMyLikes(prev => new Set(prev).add(reportId))
       setLikeCounts(prev => ({ ...prev, [reportId]: (prev[reportId] || 0) + 1 }))
     }
+  }
+
+  const sortReports = (list: any[]) => {
+    const sorted = [...list]
+    switch (sortMode) {
+      case 'order_desc':
+        return sorted.sort((a, b) => (b.order_date || '').localeCompare(a.order_date || ''))
+      case 'wait_desc':
+        return sorted.sort((a, b) => {
+          const daysA = calcDays(a.order_date, a.delivery_date) ?? 9999
+          const daysB = calcDays(b.order_date, b.delivery_date) ?? 9999
+          return daysB - daysA
+        })
+      default: // newest = created_at desc
+        return sorted.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+    }
+  }
+
+  const renderReportCard = (r: any) => {
+    const waitDays = calcDays(r.order_date, r.delivery_date)
+    const isComplete = !!r.delivery_date
+    const color = MODEL_COLOR[r.model] || '#888'
+    const isMyPost = user && r.user_id === user.id
+    const cc = commentCounts[r.id] || 0
+    return (
+      <div key={r.id} onClick={() => router.push(`/delivery/${r.id}`)} style={{ ...card, border: isMyPost ? '1px solid rgba(255,255,255,0.25)' : card.border, cursor: 'pointer', transition: '120ms', marginLeft: 0, marginRight: 0 }}>
+        {isMyPost && (
+          <div style={{ fontSize: 10, color: '#A0A0A0', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 8 }}>👤 あなたの投稿</div>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+          <span style={{ background: color + '25', color, borderRadius: 20, padding: '3px 12px', fontSize: 12, fontWeight: 700 }}>{r.model}</span>
+          {r.grade && <span style={{ fontSize: 12, color: '#888' }}>{r.grade}</span>}
+          {r.color && <span style={{ fontSize: 12, color: '#666' }}>· {r.color}</span>}
+          {r.region && <span style={{ fontSize: 12, color: '#666' }}>· {r.region}</span>}
+          {r.author_name && r.author_name !== '匿名' && <span style={{ fontSize: 11, color: '#555' }}>by {r.author_name}</span>}
+          {getTopBadge(r.delivery_date) && <span style={{ fontSize: 14 }}>{getTopBadge(r.delivery_date)}</span>}
+          {reviews[r.id] && <span style={{ fontSize: 11, color: '#F59E0B' }}>{'★'.repeat(reviews[r.id])}</span>}
+          {isComplete && waitDays !== null ? (
+            <div style={{ marginLeft: 'auto' }}>
+              <span style={{ fontSize: 36, fontWeight: 800, color: '#10B981', letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{waitDays}</span>
+              <span style={{ fontSize: 13, color: '#888', marginLeft: 4 }}>日で納車</span>
+            </div>
+          ) : (
+            <span style={{ marginLeft: 'auto', background: '#F59E0B20', color: '#F59E0B', borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 600 }}>進行中 {calcDays(r.order_date, null)}日目</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          {[
+            { key: 'order_date', icon: '📋', label: '注文' },
+            { key: 'vin_date', icon: '🔢', label: 'VIN' },
+            { key: 'docs_date', icon: '📄', label: '書類' },
+            { key: 'confirmed_date', icon: '✅', label: '確定' },
+            { key: 'delivery_date', icon: '🚗', label: '納車' },
+          ].filter(s => r[s.key]).map(s => (
+            <div key={s.key}>
+              <p style={{ fontSize: 9, color: '#555', marginBottom: 2 }}>{s.icon} {s.label}</p>
+              <p style={{ fontSize: 12, color: '#F0F0F0', fontVariantNumeric: 'tabular-nums' }}>
+                {new Date(r[s.key]).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })}
+              </p>
+            </div>
+          ))}
+        </div>
+        <XPBar orderDate={r.order_date} vinDate={r.vin_date} docsDate={r.docs_date} deliveryDate={r.delivery_date} model={r.model} color={r.color} />
+        {r.note && <p style={{ fontSize: 13, color: '#666', lineHeight: 1.7, marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.05)' }}>{r.note}</p>}
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <button onClick={(e) => handleLike(e, r.id)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: myLikes.has(r.id) ? '#EF4444' : '#444', fontFamily: 'inherit', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 4, transition: '150ms' }}>
+              {myLikes.has(r.id) ? '❤️' : '🤍'} {(likeCounts[r.id] || 0) > 0 ? likeCounts[r.id] : ''}
+            </button>
+            {cc > 0 ? (
+              <span style={{ fontSize: 12, color: '#666' }}>💬 {cc}</span>
+            ) : (
+              <span style={{ fontSize: 12, color: '#444' }}>💬 コメントする</span>
+            )}
+          </div>
+          {isMyPost && (
+            <button onClick={(e) => { e.stopPropagation(); router.push(`/delivery/edit?id=${r.id}`) }}
+              style={{ padding: '5px 14px', fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
+              ✏️ 修正する
+            </button>
+          )}
+        </div>
+      </div>
+    )
   }
 
   const summary = MODELS.map(model => {
@@ -351,7 +438,24 @@ export default function DeliveryPage() {
       </div>
 
       {/* レポート一覧 */}
-      <h2 style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.1em', color: '#666', marginBottom: 16 }}>最新の進捗レポート</h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+        <h2 style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.1em', color: '#666' }}>最新の進捗レポート</h2>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[
+            { value: 'newest', label: '新着順' },
+            { value: 'order_desc', label: '注文日順' },
+            { value: 'wait_desc', label: '待ち日数順' },
+          ].map(s => (
+            <button key={s.value} onClick={() => setSortMode(s.value)}
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
+                background: sortMode === s.value ? 'rgba(255,255,255,0.1)' : 'transparent',
+                border: sortMode === s.value ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                color: sortMode === s.value ? '#E0E0E0' : '#555' }}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
       {loading && <p style={{ color: '#444', fontSize: 13 }}>読み込み中...</p>}
       {!loading && reports.length === 0 && (
         <div style={{ ...card, textAlign: 'center', padding: '48px 24px' }}>
@@ -359,83 +463,35 @@ export default function DeliveryPage() {
           <Link href="/delivery/new" style={{ color: '#A0A0A0', fontSize: 13, textDecoration: 'none' }}>最初に報告する →</Link>
         </div>
       )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {[...reports].filter(r => !selectedModel || r.model === selectedModel).reverse().map(r => {
-          const waitDays = calcDays(r.order_date, r.delivery_date)
-          const isComplete = !!r.delivery_date
-          const color = MODEL_COLOR[r.model] || '#888'
-          const isMyPost = user && r.user_id === user.id
-          const cc = commentCounts[r.id] || 0
-          return (
-            <div key={r.id} onClick={() => router.push(`/delivery/${r.id}`)} style={{ ...card, border: isMyPost ? '1px solid rgba(255,255,255,0.25)' : card.border, cursor: 'pointer', transition: '120ms' }}>
-              {isMyPost && (
-                <div style={{ fontSize: 10, color: '#A0A0A0', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 8 }}>👤 あなたの投稿</div>
-              )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
-                <span style={{ background: color + '25', color, borderRadius: 20, padding: '3px 12px', fontSize: 12, fontWeight: 700 }}>{r.model}</span>
-                {r.grade && <span style={{ fontSize: 12, color: '#888' }}>{r.grade}</span>}
-                {r.color && <span style={{ fontSize: 12, color: '#666' }}>· {r.color}</span>}
-                {r.region && <span style={{ fontSize: 12, color: '#666' }}>· {r.region}</span>}
-                {r.author_name && r.author_name !== '匿名' && <span style={{ fontSize: 11, color: '#555' }}>by {r.author_name}</span>}
-                {getTopBadge(r.delivery_date) && <span style={{ fontSize: 14 }}>{getTopBadge(r.delivery_date)}</span>}
-                {reviews[r.id] && <span style={{ fontSize: 11, color: '#F59E0B' }}>{'★'.repeat(reviews[r.id])}</span>}
-                {isComplete && waitDays !== null ? (
-                  <div style={{ marginLeft: 'auto' }}>
-                    <span style={{ fontSize: 36, fontWeight: 800, color: '#10B981', letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{waitDays}</span>
-                    <span style={{ fontSize: 13, color: '#888', marginLeft: 4 }}>日で納車</span>
-                  </div>
-                ) : (
-                  <span style={{ marginLeft: 'auto', background: '#F59E0B20', color: '#F59E0B', borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 600 }}>進行中 {calcDays(r.order_date, null)}日目</span>
-                )}
+      {!loading && !selectedModel && reports.length > 0 && MODELS.map(modelName => {
+        const modelReports = sortReports(reports.filter(r => r.model === modelName))
+        if (modelReports.length === 0) return null
+        const isOpen = openModels.has(modelName)
+        return (
+          <div key={modelName} style={{ marginBottom: 12 }}>
+            <button onClick={() => setOpenModels(prev => {
+              const next = new Set(prev)
+              if (next.has(modelName)) next.delete(modelName); else next.add(modelName)
+              return next
+            })}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#1A1A1A', border: '1px solid rgba(255,255,255,0.08)', borderRadius: isOpen ? '12px 12px 0 0' : 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ background: MODEL_COLOR[modelName] + '25', color: MODEL_COLOR[modelName], borderRadius: 20, padding: '3px 12px', fontSize: 12, fontWeight: 700 }}>{modelName}</span>
+                <span style={{ fontSize: 12, color: '#888' }}>{modelReports.length}件</span>
               </div>
-              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                {[
-                  { key: 'order_date', icon: '📋', label: '注文' },
-                  { key: 'vin_date', icon: '🔢', label: 'VIN' },
-                  { key: 'docs_date', icon: '📄', label: '書類' },
-                  { key: 'confirmed_date', icon: '✅', label: '確定' },
-                  { key: 'delivery_date', icon: '🚗', label: '納車' },
-                ].filter(s => r[s.key]).map(s => (
-                  <div key={s.key}>
-                    <p style={{ fontSize: 9, color: '#555', marginBottom: 2 }}>{s.icon} {s.label}</p>
-                    <p style={{ fontSize: 12, color: '#F0F0F0', fontVariantNumeric: 'tabular-nums' }}>
-                      {new Date(r[s.key]).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })}
-                    </p>
-                  </div>
-                ))}
+              <span style={{ fontSize: 14, color: '#555', transition: '200ms', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+            </button>
+            {isOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 10, borderLeft: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)', borderRadius: '0 0 12px 12px', padding: '10px 0' }}>
+                {modelReports.map(r => renderReportCard(r))}
               </div>
-              <XPBar
-                orderDate={r.order_date}
-                vinDate={r.vin_date}
-                docsDate={r.docs_date}
-                deliveryDate={r.delivery_date}
-                model={r.model}
-                color={r.color}
-              />
-              {r.note && <p style={{ fontSize: 13, color: '#666', lineHeight: 1.7, marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.05)' }}>{r.note}</p>}
-              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                  <button onClick={(e) => handleLike(e, r.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: myLikes.has(r.id) ? '#EF4444' : '#444', fontFamily: 'inherit', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 4, transition: '150ms' }}>
-                    {myLikes.has(r.id) ? '❤️' : '🤍'} {(likeCounts[r.id] || 0) > 0 ? likeCounts[r.id] : ''}
-                  </button>
-                  {cc > 0 ? (
-                    <span style={{ fontSize: 12, color: '#666' }}>💬 {cc}</span>
-                  ) : (
-                    <span style={{ fontSize: 12, color: '#444' }}>💬 コメントする</span>
-                  )}
-                </div>
-                {isMyPost && (
-                  <button onClick={(e) => { e.stopPropagation(); router.push(`/delivery/edit?id=${r.id}`) }}
-                    style={{ padding: '5px 14px', fontSize: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
-                    ✏️ 修正する
-                  </button>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+            )}
+          </div>
+        )
+      })}
+      {selectedModel && <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {sortReports([...reports].filter(r => r.model === selectedModel)).map(r => renderReportCard(r))}
+      </div>}
     </div>
   )
 }
