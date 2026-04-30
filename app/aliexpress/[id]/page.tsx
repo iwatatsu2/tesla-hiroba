@@ -62,14 +62,13 @@ export default function AliexpressDetailPage() {
   const handleLike = async () => {
     if (!user) { router.push('/auth'); return }
     if (liked) {
-      await supabase.from('aliexpress_likes').delete().eq('post_id', id).eq('user_id', user.id)
+      const { error } = await supabase.from('aliexpress_likes').delete().eq('post_id', id).eq('user_id', user.id)
+      if (error) { alert('いいね削除エラー: ' + error.message); return }
       setLiked(false); setLikeCount(c => c - 1)
     } else {
       const name = displayName || user.email || '匿名'
-      await supabase.from('aliexpress_likes').upsert(
-        { post_id: id, user_id: user.id, liker_name: name },
-        { onConflict: 'post_id,user_id' }
-      )
+      const { error } = await supabase.from('aliexpress_likes').insert({ post_id: id, user_id: user.id, liker_name: name })
+      if (error) { alert('いいねエラー: ' + error.message + ' / code: ' + error.code); return }
       setLiked(true); setLikeCount(c => c + 1)
     }
   }
