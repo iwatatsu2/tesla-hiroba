@@ -60,24 +60,16 @@ export default function AliexpressDetailPage() {
   }, [id])
 
   const handleLike = async () => {
-    let currentUser = user
-    if (!currentUser) {
-      const { data, error } = await supabase.auth.signInAnonymously()
-      if (error || !data.user) { console.error('匿名サインアップ失敗:', error); return }
-      currentUser = data.user
-      setUser(currentUser)
-    }
+    if (!user) { router.push('/auth'); return }
     if (liked) {
-      const { error } = await supabase.from('aliexpress_likes').delete().eq('post_id', id).eq('user_id', currentUser.id)
-      if (error) { console.error('いいね削除失敗:', error); return }
+      await supabase.from('aliexpress_likes').delete().eq('post_id', id).eq('user_id', user.id)
       setLiked(false); setLikeCount(c => c - 1)
     } else {
-      const name = displayName || currentUser.email || '匿名'
-      const { error } = await supabase.from('aliexpress_likes').upsert(
-        { post_id: id, user_id: currentUser.id, liker_name: name },
+      const name = displayName || user.email || '匿名'
+      await supabase.from('aliexpress_likes').upsert(
+        { post_id: id, user_id: user.id, liker_name: name },
         { onConflict: 'post_id,user_id' }
       )
-      if (error) { console.error('いいね登録失敗:', error); return }
       setLiked(true); setLikeCount(c => c + 1)
     }
   }
