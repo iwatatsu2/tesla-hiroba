@@ -72,13 +72,24 @@ export default function McDetailPage() {
   }, [id])
 
   const handleLike = async () => {
-    if (!user) { router.push('/auth'); return }
+    let currentUser = user
+    if (!currentUser) {
+      const { data, error } = await supabase.auth.signInAnonymously()
+      if (error || !data.user) { console.error('匿名サインアップ失敗:', error); return }
+      currentUser = data.user
+      setUser(currentUser)
+    }
     if (liked) {
-      await supabase.from('mc_likes').delete().eq('post_id', id).eq('user_id', user.id)
+      const { error } = await supabase.from('mc_likes').delete().eq('post_id', id).eq('user_id', currentUser.id)
+      if (error) { console.error('いいね削除失敗:', error); return }
       setLiked(false); setLikeCount(c => c - 1)
     } else {
-      const name = displayName || user.email || ''
-      await supabase.from('mc_likes').insert({ post_id: id, user_id: user.id, liker_name: name })
+      const name = displayName || currentUser.email || '匿名'
+      const { error } = await supabase.from('mc_likes').upsert(
+        { post_id: id, user_id: currentUser.id, liker_name: name },
+        { onConflict: 'post_id,user_id' }
+      )
+      if (error) { console.error('いいね登録失敗:', error); return }
       setLiked(true); setLikeCount(c => c + 1)
     }
   }
