@@ -24,7 +24,18 @@ const MODEL_ILLUST: Record<string, string> = {
   'Model X':  '/illust-model-x.png',
 }
 
-// カラー名 → [R, G, B] の色相（車体の灰色ピクセルをこの色に寄せる）
+// Model Y: カラー別画像マッピング
+const MODEL_Y_COLOR_ILLUST: Record<string, string> = {
+  'パールホワイト':      '/illust-model-y-white.png',
+  'ダイヤモンドブラック': '/illust-model-y-black.png',
+  'ステルスグレー':      '/illust-model-y-grey.png',
+  'クイックシルバー':    '/illust-model-y-grey.png',  // グレー共用
+  'ウルトラレッド':      '/illust-model-y-red.png',
+  'グレイシャーブルー':  '/illust-model-y-blue.png',
+  'マリンブルー':        '/illust-model-y-blue.png',  // 青共用
+}
+
+// カラー名 → [R, G, B] の色相（Model Y以外で使用）
 const COLOR_TINT: Record<string, [number, number, number] | null> = {
   'ステルスグレー':      null,              // 変換なし
   'ダイヤモンドブラック': [20, 20, 25],      // 暗くする（全体）
@@ -143,7 +154,9 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
     return () => clearTimeout(timer)
   }, [xp])
 
-  const illust = MODEL_ILLUST[model] || '/illust-model-3.png'
+  // Model Y はカラー別画像を使用、それ以外はcanvas色変換
+  const useColorImage = (model === 'Model Y') && color && MODEL_Y_COLOR_ILLUST[color]
+  const illust = useColorImage ? MODEL_Y_COLOR_ILLUST[color!] : (MODEL_ILLUST[model] || '/illust-model-3.png')
   const level = xp === 100 ? 'MAX' : xp >= 70 ? '3' : xp >= 40 ? '2' : '1'
   const neonColor = xp === 100 ? '#39FF14' : xp >= 70 ? '#00FFFF' : xp >= 40 ? '#FF00FF' : '#C0C0C0'
 
@@ -180,13 +193,29 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
 
       {/* XPバー + 車 */}
       <div style={{ position: 'relative', paddingTop: model === 'Model 3' ? 64 : 44 }}>
-        <CarCanvas
-          src={illust}
-          color={color}
-          height={model === 'Model 3' ? 72 : 36}
-          left={model === 'Model 3' ? `clamp(0px, calc(${displayXp}% - 40px), calc(100% - 120px))` : `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`}
-          transition="left 0.5s ease"
-        />
+        {useColorImage ? (
+          <img
+            src={illust}
+            alt={model}
+            style={{
+              position: 'absolute',
+              bottom: 18,
+              left: `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`,
+              height: 36,
+              imageRendering: 'pixelated',
+              transition: 'left 0.5s ease',
+              zIndex: 2,
+            }}
+          />
+        ) : (
+          <CarCanvas
+            src={illust}
+            color={color}
+            height={model === 'Model 3' ? 72 : 36}
+            left={model === 'Model 3' ? `clamp(0px, calc(${displayXp}% - 40px), calc(100% - 120px))` : `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`}
+            transition="left 0.5s ease"
+          />
+        )}
         <div style={{ position: 'relative', height: 14, background: '#1A1A1A', border: `1px solid ${neonColor}40` }}>
           <div style={{
             height: '100%',
