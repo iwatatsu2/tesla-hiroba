@@ -29,7 +29,7 @@ const COLOR_TINT: Record<string, [number, number, number] | null> = {
   'ステルスグレー':      null,              // 変換なし
   'ダイヤモンドブラック': [20, 20, 25],      // 暗くする（全体）
   'グレイシャーブルー':  [130, 185, 215],   // 空色
-  'パールホワイト':      [240, 240, 245],   // 白
+  'パールホワイト':      [255, 255, 255],   // 純白
   'クイックシルバー':    [195, 200, 205],   // 明るいシルバー
   'ウルトラレッド':      [200, 40, 40],     // 赤
   'マリンブルー':        [30, 70, 140],     // 紺
@@ -67,8 +67,9 @@ function applyBodyTint(
     if (brightness > 220) continue
 
     // 車体部分: 元の輝度を保ちながらターゲット色に寄せる
-    const t = 0.65  // 色変換強度（0=元色、1=完全変換）
-    const ratio = brightness / 128  // 元の明るさ比
+    const isWhite = tr >= 250 && tg >= 250 && tb >= 250
+    const t = isWhite ? 0.85 : 0.65
+    const ratio = isWhite ? Math.max(brightness / 128, 1.2) : brightness / 128
     data[i]   = Math.round(r * (1-t) + tr * ratio * t)
     data[i+1] = Math.round(g * (1-t) + tg * ratio * t)
     data[i+2] = Math.round(b * (1-t) + tb * ratio * t)
