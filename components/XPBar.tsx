@@ -201,7 +201,7 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
               position: 'absolute',
               bottom: 18,
               left: `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`,
-              height: 36,
+              height: 24,
               imageRendering: 'pixelated',
               transition: 'left 0.5s ease',
               zIndex: 2,
