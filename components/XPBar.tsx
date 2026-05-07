@@ -139,7 +139,7 @@ function CarCanvas({ src, color, height, left, transition }: CarCanvasProps) {
       ref={canvasRef}
       style={{
         position: 'absolute',
-        bottom: 18,
+        bottom: 16,
         left,
         height: displayH,
         width: displayW,
@@ -217,7 +217,7 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
             alt={model}
             style={{
               position: 'absolute',
-              bottom: 18,
+              bottom: 16,
               left: `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`,
               height: 24,
               transition: 'left 0.5s ease',
