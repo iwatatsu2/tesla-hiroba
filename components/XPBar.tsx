@@ -218,8 +218,8 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
             style={{
               position: 'absolute',
               bottom: 30,
-              left: `clamp(0px, calc(${displayXp}% - 30px), calc(100% - 80px))`,
-              height: 36,
+              left: model === 'Model Y' ? `clamp(0px, calc(${displayXp}% - 30px), calc(100% - 80px))` : `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`,
+              height: model === 'Model Y' ? 36 : 24,
               transition: 'left 0.5s ease',
               zIndex: 2,
             }}
@@ -228,8 +228,8 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
           <CarCanvas
             src={illust}
             color={color}
-            height={model === 'Model 3' ? 108 : 54}
-            left={model === 'Model 3' ? `clamp(0px, calc(${displayXp}% - 60px), calc(100% - 160px))` : `clamp(0px, calc(${displayXp}% - 30px), calc(100% - 80px))`}
+            height={model === 'Model 3' ? 72 : 36}
+            left={model === 'Model 3' ? `clamp(0px, calc(${displayXp}% - 40px), calc(100% - 120px))` : `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`}
             transition="left 0.5s ease"
           />
         )}
