@@ -104,11 +104,12 @@ interface CarCanvasProps {
   src: string
   color: string | null | undefined
   height: number
+  bottom: number
   left: string
   transition: string
 }
 
-function CarCanvas({ src, color, height, left, transition }: CarCanvasProps) {
+function CarCanvas({ src, color, height, bottom, left, transition }: CarCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [naturalSize, setNaturalSize] = useState({ w: 400, h: 200 })
 
@@ -139,7 +140,7 @@ function CarCanvas({ src, color, height, left, transition }: CarCanvasProps) {
       ref={canvasRef}
       style={{
         position: 'absolute',
-        bottom: 30,
+        bottom,
         left,
         height: displayH,
         width: displayW,
@@ -210,7 +211,7 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
       )}
 
       {/* XPバー + 車 */}
-      <div style={{ position: 'relative', paddingTop: model === 'Model 3' ? 44 : 44 }}>
+      <div style={{ position: 'relative', paddingTop: 44, overflow: 'visible' }}>
         {useColorImage ? (
           <img
             src={illust}
@@ -229,6 +230,7 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
             src={illust}
             color={color}
             height={model === 'Model 3' ? 72 : 36}
+            bottom={model === 'Model 3' ? 18 : 30}
             left={model === 'Model 3' ? `clamp(0px, calc(${displayXp}% - 40px), calc(100% - 120px))` : `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`}
             transition="left 0.5s ease"
           />
