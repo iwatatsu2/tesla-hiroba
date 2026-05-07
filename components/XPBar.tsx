@@ -210,7 +210,7 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
       )}
 
       {/* XPバー + 車 */}
-      <div style={{ position: 'relative', paddingTop: model === 'Model 3' ? 64 : 44 }}>
+      <div style={{ position: 'relative', paddingTop: model === 'Model 3' ? 44 : 44 }}>
         {useColorImage ? (
           <img
             src={illust}
