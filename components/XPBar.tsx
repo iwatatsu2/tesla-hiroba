@@ -166,12 +166,15 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
   }, [xp])
 
   // Model Y / Model YL はカラー別画像を使用、それ以外はcanvas色変換
+  // Model YL は常にimg表示（色未指定時はデフォルト画像）
   const useColorImage =
-    ((model === 'Model Y') && color && MODEL_Y_COLOR_ILLUST[color]) ||
-    ((model === 'Model YL') && color && MODEL_YL_COLOR_ILLUST[color])
-  const illust = useColorImage
-    ? (model === 'Model YL' ? MODEL_YL_COLOR_ILLUST[color!] : MODEL_Y_COLOR_ILLUST[color!])
-    : (MODEL_ILLUST[model] || '/illust-model-3.png')
+    (model === 'Model YL') ||
+    ((model === 'Model Y') && color && MODEL_Y_COLOR_ILLUST[color])
+  const illust = model === 'Model YL'
+    ? ((color && MODEL_YL_COLOR_ILLUST[color]) || '/illust-model-yl.png')
+    : useColorImage
+      ? MODEL_Y_COLOR_ILLUST[color!]
+      : (MODEL_ILLUST[model] || '/illust-model-3.png')
   const level = xp === 100 ? 'MAX' : xp >= 70 ? '3' : xp >= 40 ? '2' : '1'
   const neonColor = xp === 100 ? '#39FF14' : xp >= 70 ? '#00FFFF' : xp >= 40 ? '#FF00FF' : '#C0C0C0'
 
