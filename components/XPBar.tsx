@@ -218,8 +218,8 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
             style={{
               position: 'absolute',
               bottom: 18,
-              left: `clamp(0px, calc(${displayXp}% - 30px), calc(100% - 80px))`,
-              height: 36,
+              left: `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`,
+              height: 24,
               transition: 'left 0.5s ease',
               zIndex: 2,
             }}
