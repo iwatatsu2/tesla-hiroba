@@ -35,6 +35,17 @@ const MODEL_Y_COLOR_ILLUST: Record<string, string> = {
   'マリンブルー':        '/illust-model-y-blue.png',  // 青共用
 }
 
+// Model YL: カラー別画像マッピング
+const MODEL_YL_COLOR_ILLUST: Record<string, string> = {
+  'パールホワイト':      '/illust-model-yl-white.png',
+  'ダイヤモンドブラック': '/illust-model-yl-black.png',
+  'ステルスグレー':      '/illust-model-yl-grey.png',
+  'クイックシルバー':    '/illust-model-yl-silver.png',
+  'ウルトラレッド':      '/illust-model-yl-red.png',
+  'グレイシャーブルー':  '/illust-model-yl-blue.png',
+  'マリンブルー':        '/illust-model-yl-blue.png',  // 青共用
+}
+
 // カラー名 → [R, G, B] の色相（Model Y以外で使用）
 const COLOR_TINT: Record<string, [number, number, number] | null> = {
   'ステルスグレー':      null,              // 変換なし
@@ -154,9 +165,13 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
     return () => clearTimeout(timer)
   }, [xp])
 
-  // Model Y はカラー別画像を使用、それ以外はcanvas色変換
-  const useColorImage = (model === 'Model Y') && color && MODEL_Y_COLOR_ILLUST[color]
-  const illust = useColorImage ? MODEL_Y_COLOR_ILLUST[color!] : (MODEL_ILLUST[model] || '/illust-model-3.png')
+  // Model Y / Model YL はカラー別画像を使用、それ以外はcanvas色変換
+  const useColorImage =
+    ((model === 'Model Y') && color && MODEL_Y_COLOR_ILLUST[color]) ||
+    ((model === 'Model YL') && color && MODEL_YL_COLOR_ILLUST[color])
+  const illust = useColorImage
+    ? (model === 'Model YL' ? MODEL_YL_COLOR_ILLUST[color!] : MODEL_Y_COLOR_ILLUST[color!])
+    : (MODEL_ILLUST[model] || '/illust-model-3.png')
   const level = xp === 100 ? 'MAX' : xp >= 70 ? '3' : xp >= 40 ? '2' : '1'
   const neonColor = xp === 100 ? '#39FF14' : xp >= 70 ? '#00FFFF' : xp >= 40 ? '#FF00FF' : '#C0C0C0'
 
