@@ -86,7 +86,7 @@ export default function AliexpressPage() {
 
     const { data } = await supabase.from('aliexpress_posts').insert({
       user_id: user.id,
-      author_name: displayName || user.email || '匿名',
+      author_name: displayName || '名無しさん',
       title: title.trim(), body: body.trim() || null,
       url: url.trim() || null, price: price.trim() || null,
       rating, model: model || null, tags,

@@ -135,7 +135,7 @@ export default function DeliveryDetailPage() {
       await supabase.from('delivery_likes').delete().eq('report_id', id).eq('user_id', user.id)
       setLiked(false); setLikeCount(c => c - 1)
     } else {
-      const name = displayName || user.email || ''
+      const name = displayName || '名無しさん'
       await supabase.from('delivery_likes').insert({ report_id: id, user_id: user.id, liker_name: name })
       setLiked(true); setLikeCount(c => c + 1)
     }
@@ -146,7 +146,7 @@ export default function DeliveryDetailPage() {
     if (!user) { router.push('/auth'); return }
     if (!commentBody.trim()) return
     setSubmitting(true)
-    const name = displayName || user.email || '匿名'
+    const name = displayName || '名無しさん'
     const { data } = await supabase.from('delivery_comments').insert({
       report_id: id, body: commentBody.trim(), author_name: name, user_id: user.id,
     }).select().single()
@@ -512,9 +512,9 @@ export default function DeliveryDetailPage() {
           {user ? (
             <form onSubmit={handleComment} style={{ paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 8 }}>
               <div style={{ display: 'flex', gap: 12 }}>
-                <Avatar name={displayName || user.email || '?'} />
+                <Avatar name={displayName || '名無しさん'} />
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>{displayName || user.email} として投稿</p>
+                  <p style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>{displayName || '名無しさん'} として投稿</p>
                   <textarea
                     value={commentBody}
                     onChange={e => setCommentBody(e.target.value)}

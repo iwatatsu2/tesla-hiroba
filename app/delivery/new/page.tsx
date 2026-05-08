@@ -60,7 +60,7 @@ export default function NewDelivery() {
     if (!user) { router.push('/auth'); return }
     setSubmitting(true)
     setErrorMsg('')
-    const authorName = displayName || user.email || '匿名'
+    const authorName = displayName || '名無しさん'
     const { error } = await supabase.from('delivery_reports').insert({
       model, grade: grade || null,
       order_date: dates.order_date,

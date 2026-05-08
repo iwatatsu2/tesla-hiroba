@@ -66,7 +66,7 @@ export default function AliexpressDetailPage() {
       if (error) { alert('いいね削除エラー: ' + error.message); return }
       setLiked(false); setLikeCount(c => c - 1)
     } else {
-      const name = displayName || user.email || '匿名'
+      const name = displayName || '名無しさん'
       const { error } = await supabase.from('aliexpress_likes').insert({ post_id: id, user_id: user.id, liker_name: name })
       if (error) { alert('いいねエラー: ' + error.message + ' / code: ' + error.code); return }
       setLiked(true); setLikeCount(c => c + 1)
@@ -79,7 +79,7 @@ export default function AliexpressDetailPage() {
     if (!commentBody.trim()) return
     setSubmitting(true)
     const { data } = await supabase.from('aliexpress_comments').insert({
-      post_id: id, user_id: user.id, author_name: displayName || user.email || '匿名', body: commentBody.trim(),
+      post_id: id, user_id: user.id, author_name: displayName || '名無しさん', body: commentBody.trim(),
       parent_id: replyTo?.id || null,
     }).select().single()
     if (data) setComments(prev => [...prev, data])

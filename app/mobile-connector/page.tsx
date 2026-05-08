@@ -94,7 +94,7 @@ export default function MobileConnectorPage() {
 
     const { data } = await supabase.from('mc_posts').insert({
       user_id: user.id,
-      author_name: displayName || user.email || '匿名',
+      author_name: displayName || '名無しさん',
       title: title.trim(), body: body.trim() || null,
       solution_type: solutionType, model: model || null, region: region || null,
       image_urls: imageUrls.length > 0 ? imageUrls : [],

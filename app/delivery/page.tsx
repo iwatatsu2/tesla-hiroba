@@ -233,7 +233,7 @@ export default function DeliveryPage() {
       setMyLikes(prev => { const s = new Set(prev); s.delete(reportId); return s })
       setLikeCounts(prev => ({ ...prev, [reportId]: (prev[reportId] || 1) - 1 }))
     } else {
-      const name = displayName || user.email || ''
+      const name = displayName || '名無しさん'
       await supabase.from('delivery_likes').insert({ report_id: reportId, user_id: user.id, liker_name: name })
       setMyLikes(prev => new Set(prev).add(reportId))
       setLikeCounts(prev => ({ ...prev, [reportId]: (prev[reportId] || 0) + 1 }))

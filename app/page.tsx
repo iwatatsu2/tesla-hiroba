@@ -75,7 +75,7 @@ export default function Home() {
       setMyLikes(prev => { const s = new Set(prev); s.delete(reportId); return s })
       setLikeCounts(prev => ({ ...prev, [reportId]: (prev[reportId] || 1) - 1 }))
     } else {
-      const name = displayName || user.email || ''
+      const name = displayName || '名無しさん'
       await supabase.from('delivery_likes').insert({ report_id: reportId, user_id: user.id, liker_name: name })
       setMyLikes(prev => new Set(prev).add(reportId))
       setLikeCounts(prev => ({ ...prev, [reportId]: (prev[reportId] || 0) + 1 }))
@@ -129,7 +129,7 @@ export default function Home() {
           {user ? (
             <div style={{ marginBottom: 24 }}>
               <p style={{ fontSize: 14, color: '#C0C0C0', marginBottom: 12 }}>
-                <span style={{ color: '#00FFFF', fontWeight: 700 }}>{displayName || user.email}</span> さん
+                <span style={{ color: '#00FFFF', fontWeight: 700 }}>{displayName || '名無しさん'}</span> さん
               </p>
             </div>
           ) : (
