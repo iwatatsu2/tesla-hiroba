@@ -210,19 +210,18 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
         </div>
       )}
 
-      {/* XPバー + 車 */}
-      <div style={{ position: 'relative', paddingTop: 44, overflow: 'visible' }}>
+      {/* 車イラスト */}
+      <div style={{ position: 'relative', height: model === 'Model 3' ? 72 : model === 'Model Y' ? 36 : 24, marginBottom: 2 }}>
         {useColorImage ? (
           <img
             src={illust}
             alt={model}
             style={{
               position: 'absolute',
-              bottom: 30,
+              bottom: 0,
               left: model === 'Model Y' ? `clamp(0px, calc(${displayXp}% - 30px), calc(100% - 80px))` : `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`,
               height: model === 'Model Y' ? 36 : 24,
               transition: 'left 0.5s ease',
-              zIndex: 2,
             }}
           />
         ) : (
@@ -230,7 +229,7 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
             src={illust}
             color={color}
             height={model === 'Model 3' ? 72 : 36}
-            bottom={model === 'Model 3' ? 18 : 30}
+            bottom={0}
             left={model === 'Model 3' ? `clamp(0px, calc(${displayXp}% - 40px), calc(100% - 120px))` : `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`}
             transition="left 0.5s ease"
           />
