@@ -211,7 +211,7 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
       )}
 
       {/* 車イラスト */}
-      <div style={{ position: 'relative', height: model === 'Model 3' ? 48 : model === 'Model Y' ? 36 : 30, marginBottom: 2, overflow: 'visible' }}>
+      <div style={{ position: 'relative', height: model === 'Model 3' ? 36 : model === 'Model Y' ? 36 : 30, marginBottom: 2, overflow: 'visible' }}>
         {useColorImage ? (
           <img
             src={illust}
@@ -228,9 +228,9 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
           <CarCanvas
             src={illust}
             color={color}
-            height={model === 'Model 3' ? 72 : 36}
+            height={model === 'Model 3' ? 36 : 36}
             bottom={0}
-            left={model === 'Model 3' ? `clamp(0px, calc(${displayXp}% - 40px), calc(100% - 120px))` : `clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`}
+            left={`clamp(0px, calc(${displayXp}% - 20px), calc(100% - 60px))`}
             transition="left 0.5s ease"
           />
         )}
