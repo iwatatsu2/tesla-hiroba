@@ -211,7 +211,7 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
       )}
 
       {/* 車イラスト */}
-      <div style={{ position: 'relative', height: model === 'Model 3' ? 72 : model === 'Model Y' ? 36 : 30, marginBottom: 2 }}>
+      <div style={{ position: 'relative', height: model === 'Model 3' ? 48 : model === 'Model Y' ? 36 : 30, marginBottom: 2, overflow: 'visible' }}>
         {useColorImage ? (
           <img
             src={illust}
