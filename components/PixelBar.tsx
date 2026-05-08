@@ -17,7 +17,7 @@ export default function PixelBar() {
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16 }}>
         <img src="/illust-optimus.png" alt="" style={img('/illust-optimus.png')} />
-        <img src="/illust-model-3.png" alt="" style={img('/illust-model-3.png')} />
+        <img src="/illust-model-3-pixel.png" alt="" style={img('/illust-model-3-pixel.png')} />
       </div>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16 }}>
         <img src="/illust-model-x.png" alt="" style={img('/illust-model-x.png')} />
