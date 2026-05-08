@@ -234,6 +234,10 @@ export default function XPBar({ orderDate, vinDate, docsDate, deliveryDate, mode
             transition="left 0.5s ease"
           />
         )}
+      </div>
+
+      {/* XPバー */}
+      <div>
         <div style={{ position: 'relative', height: 14, background: '#1A1A1A', border: `1px solid ${neonColor}40` }}>
           <div style={{
             height: '100%',
