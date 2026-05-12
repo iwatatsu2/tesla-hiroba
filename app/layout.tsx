@@ -5,6 +5,7 @@ import PixelBar from '@/components/PixelBar'
 import Footer from '@/components/Footer'
 import StartScreen from '@/components/StartScreen'
 import InstallBanner from '@/components/InstallBanner'
+import { Analytics } from '@vercel/analytics/react'
 
 export const metadata: Metadata = {
   title: 'TSLA PARK',
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PixelBar />
         <Footer />
         <InstallBanner />
+        <Analytics />
       </body>
     </html>
   )

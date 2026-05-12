@@ -6,6 +6,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID || ''
+
 // 現在掲載中の紹介コード＋ランキング＋掲載履歴を返す
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
@@ -13,10 +15,14 @@ export async function GET(req: Request) {
 
   const now = new Date().toISOString()
 
-  // ランキング
-  const { data: ranking } = await supabase
+  // ランキング（管理人を除外）
+  const { data: rawRanking } = await supabase
     .from('referral_ranking')
     .select('id, display_name, referral_code, referral_cooldown_until, score')
+
+  const ranking = ADMIN_USER_ID
+    ? rawRanking?.filter(r => r.id !== ADMIN_USER_ID)
+    : rawRanking
 
   const featured = ranking?.find(
     r => !r.referral_cooldown_until || r.referral_cooldown_until < now
